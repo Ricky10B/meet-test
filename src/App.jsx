@@ -3,37 +3,36 @@ import { useRef } from 'react'
 import { useEffect } from 'react'
 
 function App() {
-	const localStream = useRef()
-	const remoteConnection = useRef()
+	// const localStream = useRef()
 	const bc = useRef()
-	const pc = useRef()
-	const videoLocal = useRef()
-	const videoRemote = useRef()
+	// const pc = useRef()
+	// const videoLocal = useRef()
+	// const videoRemote = useRef()
 
 	useEffect(() => {
 		bc.current = new BroadcastChannel('channel')
 
 		bc.current.onmessage = (event) => {
 			console.log(event)
-			conexionPeer(event.data)
+			// conexionPeer(event.data)
 		}
 
-		navigator.mediaDevices
-			.getUserMedia({
-				audio: true,
-				video: true,
-			})
-			.then((stream) => {
-				localStream.current = stream
-				videoLocal.current.srcObject = stream
-			})
+		// navigator.mediaDevices
+		// 	.getUserMedia({
+		// 		audio: true,
+		// 		video: true,
+		// 	})
+		// 	.then((stream) => {
+		// 		localStream.current = stream
+		// 		videoLocal.current.srcObject = stream
+		// 	})
 	}, [])
 
 	const sendMessage = () => {
 		bc.current.postMessage('Hola Perra sarnosa')
 	}
 
-	const startVideo = async () => {
+	/*const startVideo = async () => {
 		crearPeer()
 		const offer = await pc.current.createOffer()
 		// solo se usa el socketId
@@ -64,8 +63,7 @@ function App() {
 		const configuracion = {
 			iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
 		}
-		pc.current = new RTCPeerConnection()
-		remoteConnection.current = new RTCPeerConnection()
+		pc.current = new RTCPeerConnection(configuracion)
 
 		pc.current.onicecandidate = (event) => {
 			if (event.candidate) {
@@ -75,19 +73,6 @@ function App() {
 				console.log(event.candidate)
 			}
 		}
-		remoteConnection.current.onicecandidate = (event) => {
-			if (event.candidate) {
-				bc.current.postMessage(
-					JSON.stringify({ type: 'candidate', candidate: event.candidate })
-				)
-				console.log(event.candidate)
-			}
-		}
-
-		remoteConnection.current.ontrack = (e) => {
-			console.log({ streams: e.streams })
-			videoRemote.current.srcObject = e.streams[0]
-		}
 
 		localStream.current
 			.getTracks()
@@ -96,11 +81,11 @@ function App() {
 
 	async function manejarOferta(offer) {
 		crearPeer()
-		await remoteConnection.current.setRemoteDescription(
+		await pc.current.setRemoteDescription(
 			new RTCSessionDescription(offer)
 		)
-		const answer = await remoteConnection.current.createAnswer()
-		await remoteConnection.current.setLocalDescription(answer)
+		const answer = await pc.current.createAnswer()
+		await pc.current.setLocalDescription(answer)
 		bc.current.postMessage(JSON.stringify(answer))
 	}
 
@@ -112,21 +97,20 @@ function App() {
 		if (candidato.candidate) {
 			const iceCandidate = new RTCIceCandidate(candidato.candidate)
 			await pc.current.addIceCandidate(iceCandidate)
-			await remoteConnection.current.addIceCandidate(iceCandidate)
 		}
-	}
+	}*/
 
 	return (
 		<div>
 			<p>Hola</p>
 
-			<button onClick={startVideo}>iniciar llamada</button>
+			{/* <button onClick={startVideo}>iniciar llamada</button> */}
 			<button onClick={sendMessage}>send message</button>
 
-			<div>
+			{/* <div>
 				<video ref={videoLocal} autoPlay></video>
 				<video ref={videoRemote} autoPlay muted></video>
-			</div>
+			</div> */}
 		</div>
 	)
 }
