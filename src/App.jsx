@@ -106,12 +106,11 @@ function App() {
     pc.current.oniceconnectionstatechange = () => {
       const state = pc.current.iceConnectionState;
       console.log("ICE Connection State:", state);
-      if (state === "connected") {
-        localStream.current
-          .getTracks()
-          .forEach((track) => pc.current.addTrack(track, localStream.current));
-      }
     };
+
+    localStream.current
+      .getTracks()
+      .forEach((track) => pc.current.addTrack(track, localStream.current));
   }
 
   async function manejarOferta(offer) {
