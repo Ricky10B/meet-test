@@ -52,7 +52,7 @@ function App() {
 	}
 
 	const startVideo = async () => {
-		crearPeer()
+		await crearPeer()
 		const offer = await pc.current.createOffer()
 		// solo se usa el socketId
 		// socket.emit("iniciarConexionPeer", { type: 'offer', sdp: offer.sdp }, mensaje);
@@ -78,7 +78,7 @@ function App() {
 		}
 	}
 
-	function crearPeer() {
+	async function crearPeer() {
 		const configuracion = {
 			iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
 		}
@@ -86,7 +86,7 @@ function App() {
 
 		pc.current.onicecandidate = (event) => {
 			if (event.candidate) {
-				bc.current.postMessage(
+				webSocket.current.send(
 					JSON.stringify({ type: 'candidate', candidate: event.candidate })
 				)
 				console.log(event.candidate)
@@ -99,11 +99,11 @@ function App() {
 	}
 
 	async function manejarOferta(offer) {
-		crearPeer()
+		await crearPeer()
 		await pc.current.setRemoteDescription(new RTCSessionDescription(offer))
 		const answer = await pc.current.createAnswer()
 		await pc.current.setLocalDescription(answer)
-		bc.current.postMessage(JSON.stringify(answer))
+		webSocket.current.send(JSON.stringify(answer))
 	}
 
 	async function manejarRespuesta(answer) {
