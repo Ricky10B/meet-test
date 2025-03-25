@@ -70,9 +70,9 @@ function App() {
       case "answer":
         manejarRespuesta(dataParsed);
         break;
-      // case "candidate":
-      //   manejarCandidato(dataParsed);
-      //   break;
+      case "candidate":
+        manejarCandidato(dataParsed);
+        break;
       default:
         console.log("opción inválida");
         break;
@@ -108,7 +108,9 @@ function App() {
   }
 
   async function manejarRespuesta(answer) {
-    await pc.current.setRemoteDescription(new RTCSessionDescription(answer));
+    if (pc.current.signalingState !== "stable") {
+      await pc.current.setRemoteDescription(new RTCSessionDescription(answer));
+    }
   }
 
   async function manejarCandidato(candidato) {
