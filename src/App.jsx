@@ -77,10 +77,10 @@ function App() {
   }
 
   async function crearPeer() {
-    // const configuracion = {
-    //   iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
-    // };
-    pc.current = new RTCPeerConnection();
+    const configuracion = {
+      iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+    };
+    pc.current = new RTCPeerConnection(configuracion);
 
     pc.current.ontrack = (event) => {
       console.log({ event });
