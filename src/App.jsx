@@ -1,13 +1,10 @@
 import './App.css'
-import { useState } from 'react'
-import { useRef } from 'react'
-import { useEffect } from 'react'
+import { useEffect, useState, useRef } from 'react'
 
 function App() {
 	const [isSocketConnected, setIsSocketConnected] = useState(false)
 	const [mute, setMute] = useState(false)
 	const [video, setVideo] = useState(false)
-
 	const localStream = useRef()
 	const webSocket = useRef()
 	const pc = useRef()
@@ -65,16 +62,16 @@ function App() {
 	}
 
 	function conexionPeer(dataPeer) {
-		dataPeer = JSON.parse(dataPeer)
-		switch (dataPeer.type) {
+		const dataParsed = JSON.parse(dataPeer)
+		switch (dataParsed.type) {
 			case 'offer':
-				manejarOferta(dataPeer)
+				manejarOferta(dataParsed)
 				break
 			case 'answer':
-				manejarRespuesta(dataPeer)
+				manejarRespuesta(dataParsed)
 				break
 			case 'candidate':
-				manejarCandidato(dataPeer)
+				manejarCandidato(dataParsed)
 				break
 			default:
 				console.log('opción inválida')
@@ -84,17 +81,34 @@ function App() {
 
 	async function crearPeer() {
 		const configuracion = {
-			iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+			iceServers: [
+				{
+					urls: 'stun:stun.l.google.com:19302',
+				},
+			],
 		}
+
 		pc.current = new RTCPeerConnection(configuracion)
+
+		pc.current.ontrack = (event) => {
+			console.log({ event })
+			videoRemote.current.srcObject = event.streams[0]
+			// event.streams[0].getTracks().forEach(track => {
+			// 	videoRemote.current.srcObject = track
+			// })
+		}
 
 		pc.current.onicecandidate = (event) => {
 			if (event.candidate) {
 				webSocket.current.send(
 					JSON.stringify({ type: 'candidate', candidate: event.candidate })
 				)
-				console.log(event.candidate)
 			}
+		}
+
+		pc.current.oniceconnectionstatechange = () => {
+			const state = pc.current.iceConnectionState
+			console.log('ICE Connection State:', state)
 		}
 
 		localStream.current
@@ -111,7 +125,9 @@ function App() {
 	}
 
 	async function manejarRespuesta(answer) {
-		await pc.current.setRemoteDescription(new RTCSessionDescription(answer))
+		if (pc.current.signalingState !== 'stable') {
+			await pc.current.setRemoteDescription(new RTCSessionDescription(answer))
+		}
 	}
 
 	async function manejarCandidato(candidato) {
@@ -161,6 +177,14 @@ function App() {
 			</button>
 			<button onClick={showCall} disabled={!isSocketConnected}>
 				{video ? 'ver video' : 'quitar video'}
+			</button>
+			<button onClick={startVideo}>iniciar llamada</button>
+			<button
+				onClick={sendMessage}
+				disabled={!isSocketConnected}
+				className='btnSendMessage'
+			>
+				send message
 			</button>
 
 			<div>
