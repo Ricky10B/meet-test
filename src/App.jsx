@@ -5,6 +5,9 @@ import { useEffect } from 'react'
 
 function App() {
 	const [isSocketConnected, setIsSocketConnected] = useState(false)
+	const [mute, setMute] = useState(false)
+	const [video, setVideo] = useState(false)
+
 	const localStream = useRef()
 	const webSocket = useRef()
 	const pc = useRef()
@@ -30,6 +33,7 @@ function App() {
 			webSocket.current.onclose = (event) => {
 				console.log('socket cerrado', event)
 				setIsSocketConnected(false)
+				pc.current.close()
 			}
 
 			navigator.mediaDevices
@@ -117,17 +121,46 @@ function App() {
 		}
 	}
 
+	function closeCall() {
+		pc.current.close()
+	}
+
+	function muteCall() {
+		setMute((prev) => !prev)
+
+		const tracks = localStream.current.getAudioTracks()
+		tracks.forEach((track) => (track.enabled = mute))
+	}
+
+	function showCall() {
+		setVideo((prev) => !prev)
+
+		const tracks = localStream.current.getVideoTracks()
+		tracks.forEach((track) => (track.enabled = video))
+	}
+
 	return (
 		<div>
 			<p>Hola</p>
 
-			<button onClick={startVideo}>iniciar llamada</button>
+			<button onClick={startVideo} disabled={!isSocketConnected}>
+				iniciar llamada
+			</button>
 			<button
 				onClick={sendMessage}
 				disabled={!isSocketConnected}
 				className='btnSendMessage'
 			>
-				send message
+				enviar mensaje
+			</button>
+			<button onClick={closeCall} disabled={!isSocketConnected}>
+				terminar llamada
+			</button>
+			<button onClick={muteCall} disabled={!isSocketConnected}>
+				{mute ? 'desmutear' : 'mutear'}
+			</button>
+			<button onClick={showCall} disabled={!isSocketConnected}>
+				{video ? 'ver video' : 'quitar video'}
 			</button>
 
 			<div>
