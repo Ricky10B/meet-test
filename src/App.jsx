@@ -78,8 +78,19 @@ function App() {
 
   async function crearPeer() {
     const configuracion = {
-      iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+      iceServers: [
+        {
+          urls: [
+            "stun:stun.l.google.com:19302",
+            "stun1:stun.l.google.com:19302",
+            "stun2:stun.l.google.com:19302",
+            "stun3:stun.l.google.com:19302",
+            "stun4:stun.l.google.com:19302",
+          ],
+        },
+      ],
     };
+
     pc.current = new RTCPeerConnection(configuracion);
 
     pc.current.ontrack = (event) => {
@@ -98,9 +109,15 @@ function App() {
       }
     };
 
-    localStream.current
-      .getTracks()
-      .forEach((track) => pc.current.addTrack(track, localStream.current));
+    pc.current.oniceconnectionstatechange = () => {
+      const state = pc.current.iceConnectionState;
+      console.log("ICE Connection State:", state);
+      if (state === "connected") {
+        localStream.current
+          .getTracks()
+          .forEach((track) => pc.current.addTrack(track, localStream.current));
+      }
+    };
   }
 
   async function manejarOferta(offer) {
