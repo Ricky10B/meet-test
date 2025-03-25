@@ -67,9 +67,9 @@ function App() {
       case "offer":
         manejarOferta(dataParsed);
         break;
-      // case "answer":
-      //   manejarRespuesta(dataParsed);
-      //   break;
+      case "answer":
+        manejarRespuesta(dataParsed);
+        break;
       // case "candidate":
       //   manejarCandidato(dataParsed);
       //   break;
