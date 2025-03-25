@@ -1,7 +1,5 @@
 import "./App.css";
-import { useState } from "react";
-import { useRef } from "react";
-import { useEffect } from "react";
+import { useEffect, useState, useRef } from "react";
 
 function App() {
   const [isSocketConnected, setIsSocketConnected] = useState(false);
@@ -79,10 +77,10 @@ function App() {
   }
 
   async function crearPeer() {
-    const configuracion = {
-      iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
-    };
-    pc.current = new RTCPeerConnection(configuracion);
+    // const configuracion = {
+    //   iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+    // };
+    pc.current = new RTCPeerConnection();
 
     pc.current.ontrack = (event) => {
       console.log({ event });
