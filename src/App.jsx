@@ -62,7 +62,6 @@ function App() {
 
   function conexionPeer(dataPeer) {
     const dataParsed = JSON.parse(dataPeer);
-    console.log({ dataParsed });
     switch (dataParsed.type) {
       case "offer":
         manejarOferta(dataParsed);
@@ -85,12 +84,19 @@ function App() {
     };
     pc.current = new RTCPeerConnection(configuracion);
 
+    pc.current.ontrack = (event) => {
+      console.log({ event });
+      videoRemote.current.srcObject = event.streams[0];
+      // event.streams[0].getTracks().forEach(track => {
+      // 	videoRemote.current.srcObject = track
+      // })
+    };
+
     pc.current.onicecandidate = (event) => {
       if (event.candidate) {
         webSocket.current.send(
           JSON.stringify({ type: "candidate", candidate: event.candidate })
         );
-        console.log(event.candidate);
       }
     };
 
