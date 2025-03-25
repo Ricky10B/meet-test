@@ -1,44 +1,63 @@
 import './App.css'
+import { useState } from 'react'
 import { useRef } from 'react'
 import { useEffect } from 'react'
 
 function App() {
-	// const localStream = useRef()
-	const bc = useRef()
-	// const pc = useRef()
-	// const videoLocal = useRef()
-	// const videoRemote = useRef()
+	const [isSocketConnected, setIsSocketConnected] = useState(false)
+	const localStream = useRef()
+	const webSocket = useRef()
+	const pc = useRef()
+	const videoLocal = useRef()
+	const videoRemote = useRef()
 
 	useEffect(() => {
-		bc.current = new BroadcastChannel('channel')
+		if (webSocket.current?.readyState !== 1) {
+			webSocket.current = new WebSocket(
+				'wss://meet.estoesunaprueba.fun:8050/ws/webrtc/'
+			)
 
-		bc.current.onmessage = (event) => {
-			console.log(event)
-			// conexionPeer(event.data)
+			webSocket.current.onopen = (event) => {
+				console.log('socket conectado', event)
+				setIsSocketConnected(true)
+			}
+
+			webSocket.current.onmessage = (event) => {
+				console.log(event.data)
+				conexionPeer(event.data)
+			}
+
+			webSocket.current.onclose = (event) => {
+				console.log('socket cerrado', event)
+				setIsSocketConnected(false)
+			}
+
+			navigator.mediaDevices
+				.getUserMedia({
+					audio: true,
+					video: true,
+				})
+				.then((stream) => {
+					localStream.current = stream
+					videoLocal.current.srcObject = stream
+				})
 		}
-
-		// navigator.mediaDevices
-		// 	.getUserMedia({
-		// 		audio: true,
-		// 		video: true,
-		// 	})
-		// 	.then((stream) => {
-		// 		localStream.current = stream
-		// 		videoLocal.current.srcObject = stream
-		// 	})
 	}, [])
 
 	const sendMessage = () => {
-		bc.current.postMessage('Hola Perra sarnosa')
+		if (webSocket.current?.readyState === 1) {
+			console.log('enviando mensaje...')
+			webSocket.current.send(JSON.stringify({ message: 'Hola Perra sarnosa' }))
+		}
 	}
 
-	/*const startVideo = async () => {
+	const startVideo = async () => {
 		crearPeer()
 		const offer = await pc.current.createOffer()
 		// solo se usa el socketId
 		// socket.emit("iniciarConexionPeer", { type: 'offer', sdp: offer.sdp }, mensaje);
 		await pc.current.setLocalDescription(offer)
-		bc.current.postMessage(JSON.stringify(offer))
+		webSocket.current.send(JSON.stringify(offer))
 	}
 
 	function conexionPeer(dataPeer) {
@@ -81,9 +100,7 @@ function App() {
 
 	async function manejarOferta(offer) {
 		crearPeer()
-		await pc.current.setRemoteDescription(
-			new RTCSessionDescription(offer)
-		)
+		await pc.current.setRemoteDescription(new RTCSessionDescription(offer))
 		const answer = await pc.current.createAnswer()
 		await pc.current.setLocalDescription(answer)
 		bc.current.postMessage(JSON.stringify(answer))
@@ -98,19 +115,25 @@ function App() {
 			const iceCandidate = new RTCIceCandidate(candidato.candidate)
 			await pc.current.addIceCandidate(iceCandidate)
 		}
-	}*/
+	}
 
 	return (
 		<div>
 			<p>Hola</p>
 
-			{/* <button onClick={startVideo}>iniciar llamada</button> */}
-			<button onClick={sendMessage}>send message</button>
+			<button onClick={startVideo}>iniciar llamada</button>
+			<button
+				onClick={sendMessage}
+				disabled={!isSocketConnected}
+				className='btnSendMessage'
+			>
+				send message
+			</button>
 
-			{/* <div>
-				<video ref={videoLocal} autoPlay></video>
-				<video ref={videoRemote} autoPlay muted></video>
-			</div> */}
+			<div>
+				<video ref={videoLocal} autoPlay muted></video>
+				<video ref={videoRemote} autoPlay></video>
+			</div>
 		</div>
 	)
 }
