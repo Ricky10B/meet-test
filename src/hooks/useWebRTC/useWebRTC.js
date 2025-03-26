@@ -1,92 +1,91 @@
-import { useRef } from "react";
+import { useRef } from 'react'
+import { useWebSocket } from '../useWebSocket/useWebSocket'
 
-export function useWebRTC({ handlerOnTrack, socketSendMessage }) {
-  const peerConnection = useRef();
+export function useWebRTC() {
+	const peerConnection = useRef()
 
-  const createPeer = async () => {
-    const configuracion = {
-      iceServers: [
-        {
-          urls: "stun:stun.l.google.com:19302",
-        },
-      ],
-    };
+	const { socketSendMessage } = useWebSocket()
 
-    peerConnection.current = new RTCPeerConnection(configuracion);
-    peerConnection.current.ontrack = handlerOnTrack;
-    peerConnection.current.onicecandidate = (event) => {
-      if (event.candidate) {
-        socketSendMessage({ type: "candidate", candidate: event.candidate });
-      }
-    };
-  };
+	const crearPeer = ({ handlerOnTrack }) => {
+		const configuracion = {
+			iceServers: [
+				{
+					urls: 'stun:stun.l.google.com:19302',
+				},
+			],
+		}
 
-  const handlerMessagesWebRTC = (dataPeer) => {
-    const dataParsed = JSON.parse(dataPeer);
-    switch (dataParsed.type) {
-      case "offer":
-        manejarOferta(dataParsed);
-        break;
-      case "answer":
-        manejarRespuesta(dataParsed);
-        break;
-      case "candidate":
-        manejarCandidato(dataParsed);
-        break;
-      case "closeCall":
-        closeConnection();
-        break;
-      default:
-        console.log("opción inválida");
-        break;
-    }
-  };
+		peerConnection.current = new RTCPeerConnection(configuracion)
+		peerConnection.current.ontrack = handlerOnTrack
+		peerConnection.current.onicecandidate = (event) => {
+			if (event.candidate) {
+				socketSendMessage({ type: 'candidate', candidate: event.candidate })
+			}
+		}
+	}
 
-  const createOffer = async () => {
-    await createPeer();
-    const offer = await peerConnection.current.createOffer();
-    await peerConnection.current.setLocalDescription(offer);
-    socketSendMessage(offer);
-  };
+	const handlerMessagesWebRTC = (dataPeer) => {
+		const dataParsed = JSON.parse(dataPeer)
+		switch (dataParsed.type) {
+			case 'offer':
+				manejarOferta(dataParsed)
+				break
+			case 'answer':
+				manejarRespuesta(dataParsed)
+				break
+			case 'candidate':
+				manejarCandidato(dataParsed)
+				break
+			case 'closeCall':
+				closeConnection()
+				break
+			default:
+				console.log('opción inválida')
+				break
+		}
+	}
 
-  const manejarOferta = async (offer) => {
-    await createPeer();
-    await peerConnection.current.setRemoteDescription(
-      new RTCSessionDescription(offer)
-    );
-    const answer = await peerConnection.current.createAnswer();
-    await peerConnection.current.setLocalDescription(answer);
-    socketSendMessage(answer);
-  };
+	const createOffer = async () => {
+		crearPeer()
+		const offer = await peerConnection.current.createOffer()
+		await peerConnection.current.setLocalDescription(offer)
+		socketSendMessage(offer)
+	}
 
-  const manejarRespuesta = async (answer) => {
-    if (peerConnection.current.signalingState !== "stable") {
-      await peerConnection.current.setRemoteDescription(
-        new RTCSessionDescription(answer)
-      );
-    }
-  };
+	const manejarOferta = async (offer) => {
+		crearPeer()
+		await peerConnection.current.setRemoteDescription(
+			new RTCSessionDescription(offer)
+		)
+		const answer = await peerConnection.current.createAnswer()
+		await peerConnection.current.setLocalDescription(answer)
+		socketSendMessage(answer)
+	}
 
-  const manejarCandidato = async (candidato) => {
-    if (candidato.candidate) {
-      const iceCandidate = new RTCIceCandidate(candidato.candidate);
-      await peerConnection.current.addIceCandidate(iceCandidate);
-    }
-  };
+	const manejarRespuesta = async (answer) => {
+		if (peerConnection.current.signalingState !== 'stable') {
+			await peerConnection.current.setRemoteDescription(
+				new RTCSessionDescription(answer)
+			)
+		}
+	}
 
-  const closeConnection = () => {
-    peerConnection.current.close();
-  };
+	const manejarCandidato = async (candidato) => {
+		if (candidato.candidate) {
+			const iceCandidate = new RTCIceCandidate(candidato.candidate)
+			await peerConnection.current.addIceCandidate(iceCandidate)
+		}
+	}
 
-  const handlerAddTracks = (track, stream) => {
-    peerConnection.current.addTrack(track, stream);
-  };
+	const closeConnection = () => {
+		peerConnection.current.close()
+	}
 
-  return {
-    handlerMessagesWebRTC,
-    createPeer,
-    createOffer,
-    closeConnection,
-    handlerAddTracks,
-  };
+	return {
+		peerConnection: peerConnection.current,
+		handlerMessagesWebRTC,
+		crearPeer,
+		createOffer,
+		closeConnection,
+	}
 }
