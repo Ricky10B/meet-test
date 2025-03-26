@@ -14,7 +14,7 @@ function App() {
   const videoLocal = useRef();
   const videoRemote = useRef();
 
-  const { webSocket, createWebSocket, socketSendMessage } = useWebSocket();
+  const { createWebSocket, socketSendMessage } = useWebSocket();
   const {
     handlerMessagesWebRTC,
     createOffer,
@@ -23,30 +23,28 @@ function App() {
   } = useWebRTC({ handlerOnTrack, socketSendMessage });
 
   useEffect(() => {
-    if (webSocket?.readyState !== webSocket?.OPEN) {
-      const onopen = (event) => {
-        console.log("socket conectado", event);
-        setIsSocketConnected(true);
-      };
+    const onopen = (event) => {
+      console.log("socket conectado", event);
+      setIsSocketConnected(true);
+    };
 
-      const onmessage = (event) => {
-        console.log(event.data);
-        handlerMessagesWebRTC(event.data);
-      };
+    const onmessage = (event) => {
+      console.log(event.data);
+      handlerMessagesWebRTC(event.data);
+    };
 
-      const onclose = (event) => {
-        console.log("socket cerrado", event);
-        setIsSocketConnected(false);
-        closeConnection();
-      };
+    const onclose = (event) => {
+      console.log("socket cerrado", event);
+      setIsSocketConnected(false);
+      closeConnection();
+    };
 
-      createWebSocket({
-        url: "wss://meet.estoesunaprueba.fun:8050/ws/webrtc/",
-        onopen,
-        onmessage,
-        onclose,
-      });
-    }
+    createWebSocket({
+      url: "wss://meet.estoesunaprueba.fun:8050/ws/webrtc/",
+      onopen,
+      onmessage,
+      onclose,
+    });
   }, []);
 
   // const sendMessage = () => {

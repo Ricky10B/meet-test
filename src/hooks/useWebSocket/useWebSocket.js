@@ -10,6 +10,8 @@ export function useWebSocket() {
     onerror = () => {},
     onclose = () => {},
   }) => {
+    if (webSocket.current?.readyState === WebSocket.OPEN) return;
+
     webSocket.current = new WebSocket(url);
 
     webSocket.current.onopen = onopen;
@@ -19,7 +21,7 @@ export function useWebSocket() {
   };
 
   const socketSendMessage = (dataToSend) => {
-    if (webSocket.current?.readyState !== webSocket.current?.OPEN)
+    if (webSocket.current?.readyState !== WebSocket.OPEN)
       webSocket.current.send(JSON.stringify(dataToSend));
   };
 
