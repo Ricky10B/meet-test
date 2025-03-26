@@ -29,7 +29,7 @@ function App() {
     };
 
     const onmessage = (event) => {
-      console.log(event.data);
+      console.log(event);
       handlerMessagesWebRTC(event.data);
     };
 
