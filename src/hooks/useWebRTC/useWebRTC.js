@@ -24,6 +24,9 @@ export function useWebRTC({ handlerOnTrack, socketSendMessage }) {
   const handlerMessagesWebRTC = (dataPeer) => {
     const dataParsed = JSON.parse(dataPeer);
     console.log({ dataParsed });
+
+    if (dataParsed.id == null) return;
+
     switch (dataParsed.type) {
       case "offer":
         manejarOferta(dataParsed);

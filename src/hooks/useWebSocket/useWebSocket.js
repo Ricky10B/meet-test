@@ -2,6 +2,7 @@ import { useRef } from "react";
 
 export function useWebSocket() {
   const webSocket = useRef();
+  const idUser = useRef(crypto.randomUUID());
 
   const createWebSocket = ({
     url = "",
@@ -21,8 +22,10 @@ export function useWebSocket() {
   };
 
   const socketSendMessage = (dataToSend) => {
-    if (webSocket.current?.readyState === WebSocket.OPEN)
+    if (webSocket.current?.readyState === WebSocket.OPEN) {
+      dataToSend.id = idUser.current;
       webSocket.current.send(JSON.stringify(dataToSend));
+    }
   };
 
   return {
