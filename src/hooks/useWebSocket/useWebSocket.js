@@ -21,7 +21,7 @@ export function useWebSocket() {
   };
 
   const socketSendMessage = (dataToSend) => {
-    if (webSocket.current?.readyState === WebSocket.OPEN)
+    if (webSocket.current?.readyState !== WebSocket.OPEN)
       webSocket.current.send(JSON.stringify(dataToSend));
   };
 
