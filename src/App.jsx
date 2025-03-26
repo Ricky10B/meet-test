@@ -45,20 +45,6 @@ function App() {
       onmessage,
       onclose,
     });
-
-    navigator.mediaDevices
-      .getUserMedia({
-        audio: true,
-        video: true,
-      })
-      .then((stream) => {
-        localStream.current = stream;
-        videoLocal.current.srcObject = stream;
-      })
-      .catch((error) => {
-        alert("no tiene camara");
-        console.error(error);
-      });
   }, []);
 
   // const sendMessage = () => {
@@ -69,6 +55,8 @@ function App() {
   // }
 
   const startVideo = async () => {
+    console.log("iniciar videollamada");
+
     await createOffer();
     localStream.current
       .getTracks()
@@ -96,23 +84,22 @@ function App() {
   };
 
   const joinVideoChannel = () => {
-    // setShowVideoChannel(true);
+    setShowVideoChannel(true);
 
-    // navigator.mediaDevices
-    //   .getUserMedia({
-    //     audio: true,
-    //     video: true,
-    //   })
-    //   .then((stream) => {
-    //     localStream.current = stream;
-    //     videoLocal.current.srcObject = stream;
-    //     startVideo();
-    //   })
-    //   .catch((error) => {
-    //     alert("no tiene camara");
-    //     console.error(error);
-    //   });
-    startVideo();
+    navigator.mediaDevices
+      .getUserMedia({
+        audio: true,
+        video: true,
+      })
+      .then((stream) => {
+        localStream.current = stream;
+        videoLocal.current.srcObject = stream;
+        startVideo();
+      })
+      .catch((error) => {
+        alert("no tiene camara");
+        console.error(error);
+      });
   };
 
   function handlerOnTrack(event) {
