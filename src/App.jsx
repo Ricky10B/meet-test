@@ -1,7 +1,7 @@
 import './App.css'
 import { useEffect, useState, useRef } from 'react'
 import { useWebSocket } from './hooks/useWebSocket/useWebSocket'
-import { CloseCallIcon } from './icons'
+import { CloseCallIcon, HideShowCameraIcon, ShowCameraIcon } from './icons'
 import { useWebRTC } from './hooks/useWebRTC/useWebRTC'
 
 function App() {
@@ -122,38 +122,38 @@ function App() {
 				</div>
 			</aside>
 
-			{showVideoChannel && (
-				<section>
+			{/* {showVideoChannel && ( */}
+			<section>
+				<div>
 					<div>
-						<div>
-							<video ref={videoLocal} autoPlay muted></video>
-							<video ref={videoRemote} autoPlay></video>
-						</div>
-
-						<div>
-							{/* <button onClick={startVideo} disabled={!isSocketConnected}>
-								iniciar llamada
-							</button> */}
-							{/* <button
-								onClick={sendMessage}
-								disabled={!isSocketConnected}
-								className='btnSendMessage'
-							>
-								enviar mensaje
-							</button> */}
-							<button onClick={handlerCloseCall} disabled={!isSocketConnected}>
-								<CloseCallIcon />
-							</button>
-							<button onClick={handlerMuteCall} disabled={!isSocketConnected}>
-								{isMuteCall ? 'desmutear' : 'mutear'}
-							</button>
-							<button onClick={handlerShowCall} disabled={!isSocketConnected}>
-								{isShowCamera ? <ShowCameraIcon /> : <HideShowCameraIcon />}
-							</button>
-						</div>
+						<video ref={videoLocal} autoPlay muted></video>
+						<video ref={videoRemote} autoPlay></video>
 					</div>
-				</section>
-			)}
+
+					<div>
+						{/* <button onClick={startVideo} disabled={!isSocketConnected}>
+							iniciar llamada
+						</button> */}
+						{/* <button
+							onClick={sendMessage}
+							disabled={!isSocketConnected}
+							className='btnSendMessage'
+						>
+							enviar mensaje
+						</button> */}
+						<button onClick={handlerCloseCall} disabled={!isSocketConnected}>
+							<CloseCallIcon />
+						</button>
+						<button onClick={handlerMuteCall} disabled={!isSocketConnected}>
+							{isMuteCall ? 'desmutear' : 'mutear'}
+						</button>
+						<button onClick={handlerShowCall} disabled={!isSocketConnected}>
+							{isShowCamera ? <ShowCameraIcon /> : <HideShowCameraIcon />}
+						</button>
+					</div>
+				</div>
+			</section>
+			{/* )} */}
 
 			{/* <button onClick={startVideo} disabled={!isSocketConnected}>
 				iniciar llamada
