@@ -1,6 +1,7 @@
 import './App.css'
 import { useEffect, useState, useRef } from 'react'
 import { useWebsocket } from './hooks/useWebSocket'
+import { useWebRTC } from './hooks/useWebRTC'
 
 function App () {
 	const [isSocketConnected, setIsSocketConnected] = useState(false)
@@ -8,11 +9,11 @@ function App () {
 	const [video, setVideo] = useState(false)
 
 	const localStream = useRef()
-	const pc = useRef()
 	const videoLocal = useRef()
 	const videoRemote = useRef()
 
 	const { createConnectionWebSocket, sendSocketMessage } = useWebsocket()
+	const { handlerPeerMessages, createOffer, closePeerconnection, handlerAddTrack } = useWebRTC({ sendSocketMessage, handlerListenTrack })
 
 	useEffect(() => {
 		const onopen = (event) => {
@@ -22,13 +23,13 @@ function App () {
 
 		const onmessage = (event) => {
 			console.log(event.data)
-			conexionPeer(event.data)
+			handlerPeerMessages(event.data)
 		}
 
 		const onclose = (event) => {
 			console.log('socket cerrado', event)
 			setIsSocketConnected(false)
-			pc.current.close()
+			closePeerconnection()
 		}
 
 		createConnectionWebSocket({
@@ -55,104 +56,33 @@ function App () {
 	}
 
 	const startVideo = async () => {
-		await crearPeer()
-		const offer = await pc.current.createOffer()
-		// solo se usa el socketId
-		// socket.emit("iniciarConexionPeer", { type: 'offer', sdp: offer.sdp }, mensaje);
-		await pc.current.setLocalDescription(offer)
-		sendSocketMessage(offer)
+		createOffer()
+		localStream.current.getTracks().forEach(track => {
+			handlerAddTrack(track, localStream.current)
+		})
 	}
 
-	function conexionPeer(dataPeer) {
-		const dataParsed = JSON.parse(dataPeer)
-		switch (dataParsed.type) {
-			case 'offer':
-				manejarOferta(dataParsed)
-				break
-			case 'answer':
-				manejarRespuesta(dataParsed)
-				break
-			case 'candidate':
-				manejarCandidato(dataParsed)
-				break
-			default:
-				console.log('opción inválida')
-				break
-		}
+	const closeCall = () => {
+		closePeerconnection()
 	}
 
-	async function crearPeer() {
-		const configuracion = {
-			iceServers: [
-				{
-					urls: 'stun:stun.l.google.com:19302',
-				},
-			],
-		}
-
-		pc.current = new RTCPeerConnection(configuracion)
-
-		pc.current.ontrack = (event) => {
-			console.log({ event })
-			videoRemote.current.srcObject = event.streams[0]
-			// event.streams[0].getTracks().forEach(track => {
-			// 	videoRemote.current.srcObject = track
-			// })
-		}
-
-		pc.current.onicecandidate = (event) => {
-			if (event.candidate) {
-				sendSocketMessage({ type: 'candidate', candidate: event.candidate })
-			}
-		}
-
-		pc.current.oniceconnectionstatechange = () => {
-			const state = pc.current.iceConnectionState
-			console.log('ICE Connection State:', state)
-		}
-
-		localStream.current
-			.getTracks()
-			.forEach((track) => pc.current.addTrack(track, localStream.current))
-	}
-
-	async function manejarOferta(offer) {
-		await crearPeer()
-		await pc.current.setRemoteDescription(new RTCSessionDescription(offer))
-		const answer = await pc.current.createAnswer()
-		await pc.current.setLocalDescription(answer)
-		sendSocketMessage(answer)
-	}
-
-	async function manejarRespuesta(answer) {
-		if (pc.current.signalingState !== 'stable') {
-			await pc.current.setRemoteDescription(new RTCSessionDescription(answer))
-		}
-	}
-
-	async function manejarCandidato(candidato) {
-		if (candidato.candidate) {
-			const iceCandidate = new RTCIceCandidate(candidato.candidate)
-			await pc.current.addIceCandidate(iceCandidate)
-		}
-	}
-
-	function closeCall() {
-		pc.current.close()
-	}
-
-	function muteCall() {
+	const muteCall = () => {
 		setMute((prev) => !prev)
 
 		const tracks = localStream.current.getAudioTracks()
 		tracks.forEach((track) => (track.enabled = mute))
 	}
 
-	function showCall() {
+	const showCall = () => {
 		setVideo((prev) => !prev)
 
 		const tracks = localStream.current.getVideoTracks()
 		tracks.forEach((track) => (track.enabled = video))
+	}
+
+	function handlerListenTrack (event) {
+		console.log({ event })
+		videoRemote.current.srcObject = event.streams[0]
 	}
 
 	return (
@@ -177,14 +107,6 @@ function App () {
 			</button>
 			<button onClick={showCall} disabled={!isSocketConnected}>
 				{video ? 'ver video' : 'quitar video'}
-			</button>
-			<button onClick={startVideo}>iniciar llamada</button>
-			<button
-				onClick={sendMessage}
-				disabled={!isSocketConnected}
-				className='btnSendMessage'
-			>
-				send message
 			</button>
 
 			<div>
