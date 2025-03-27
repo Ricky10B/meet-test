@@ -1,55 +1,57 @@
 import './App.css'
 import { useEffect, useState, useRef } from 'react'
+import { useWebsocket } from './hooks/useWebSocket'
 
-function App() {
+function App () {
 	const [isSocketConnected, setIsSocketConnected] = useState(false)
 	const [mute, setMute] = useState(false)
 	const [video, setVideo] = useState(false)
+
 	const localStream = useRef()
-	const webSocket = useRef()
 	const pc = useRef()
 	const videoLocal = useRef()
 	const videoRemote = useRef()
 
+	const { createConnectionWebSocket, sendSocketMessage } = useWebsocket()
+
 	useEffect(() => {
-		if (webSocket.current?.readyState !== 1) {
-			webSocket.current = new WebSocket(
-				'wss://meet.estoesunaprueba.fun:8050/ws/webrtc/'
-			)
-
-			webSocket.current.onopen = (event) => {
-				console.log('socket conectado', event)
-				setIsSocketConnected(true)
-			}
-
-			webSocket.current.onmessage = (event) => {
-				console.log(event.data)
-				conexionPeer(event.data)
-			}
-
-			webSocket.current.onclose = (event) => {
-				console.log('socket cerrado', event)
-				setIsSocketConnected(false)
-				pc.current.close()
-			}
-
-			navigator.mediaDevices
-				.getUserMedia({
-					audio: true,
-					video: true,
-				})
-				.then((stream) => {
-					localStream.current = stream
-					videoLocal.current.srcObject = stream
-				})
+		const onopen = (event) => {
+			console.log('socket conectado', event)
+			setIsSocketConnected(true)
 		}
+
+		const onmessage = (event) => {
+			console.log(event.data)
+			conexionPeer(event.data)
+		}
+
+		const onclose = (event) => {
+			console.log('socket cerrado', event)
+			setIsSocketConnected(false)
+			pc.current.close()
+		}
+
+		createConnectionWebSocket({
+			url: 'wss://meet.estoesunaprueba.fun:8050/ws/webrtc/',
+			onopen,
+			onmessage,
+			onclose
+		})
+
+		navigator.mediaDevices
+			.getUserMedia({
+				audio: true,
+				video: true,
+			})
+			.then((stream) => {
+				localStream.current = stream
+				videoLocal.current.srcObject = stream
+			})
 	}, [])
 
 	const sendMessage = () => {
-		if (webSocket.current?.readyState === 1) {
-			console.log('enviando mensaje...')
-			webSocket.current.send(JSON.stringify({ message: 'Hola Perra sarnosa' }))
-		}
+		console.log('enviando mensaje...')
+		sendSocketMessage({ message: 'Hola Perra sarnosa' })
 	}
 
 	const startVideo = async () => {
@@ -58,7 +60,7 @@ function App() {
 		// solo se usa el socketId
 		// socket.emit("iniciarConexionPeer", { type: 'offer', sdp: offer.sdp }, mensaje);
 		await pc.current.setLocalDescription(offer)
-		webSocket.current.send(JSON.stringify(offer))
+		sendSocketMessage(offer)
 	}
 
 	function conexionPeer(dataPeer) {
@@ -100,9 +102,7 @@ function App() {
 
 		pc.current.onicecandidate = (event) => {
 			if (event.candidate) {
-				webSocket.current.send(
-					JSON.stringify({ type: 'candidate', candidate: event.candidate })
-				)
+				sendSocketMessage({ type: 'candidate', candidate: event.candidate })
 			}
 		}
 
@@ -121,7 +121,7 @@ function App() {
 		await pc.current.setRemoteDescription(new RTCSessionDescription(offer))
 		const answer = await pc.current.createAnswer()
 		await pc.current.setLocalDescription(answer)
-		webSocket.current.send(JSON.stringify(answer))
+		sendSocketMessage(answer)
 	}
 
 	async function manejarRespuesta(answer) {
