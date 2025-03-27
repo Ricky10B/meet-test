@@ -5,7 +5,7 @@ import { useWebRTC } from './hooks/useWebRTC'
 
 function App () {
 	const [usersConnected, setUsersConnected] = useState([])
-	const [isSocketConnected, setIsSocketConnected] = useState(false)
+	// const [isSocketConnected, setIsSocketConnected] = useState(false)
 	const [mute, setMute] = useState(false)
 	const [video, setVideo] = useState(false)
 
@@ -27,28 +27,28 @@ function App () {
 		// clear prev users saved
 		window.localStorage.setItem('usersConnected', '')
 
-		const onopen = (event) => {
-			console.log('socket conectado', event)
-			setIsSocketConnected(true)
-		}
+		// const onopen = (event) => {
+		// 	console.log('socket conectado', event)
+		// 	setIsSocketConnected(true)
+		// }
 
-		const onmessage = (event) => {
-			console.log(event.data)
-			handlerPeerMessages(event.data)
-		}
+		// const onmessage = (event) => {
+		// 	console.log(event.data)
+		// 	handlerPeerMessages(event.data)
+		// }
 
-		const onclose = (event) => {
-			console.log('socket cerrado', event)
-			setIsSocketConnected(false)
-			closePeerconnection()
-		}
+		// const onclose = (event) => {
+		// 	console.log('socket cerrado', event)
+		// 	setIsSocketConnected(false)
+		// 	closePeerconnection()
+		// }
 
-		createConnectionWebSocket({
-			url: 'wss://meet.estoesunaprueba.fun:8050/ws/webrtc/',
-			onopen,
-			onmessage,
-			onclose
-		})
+		// createConnectionWebSocket({
+		// 	url: 'wss://meet.estoesunaprueba.fun:8050/ws/webrtc/',
+		// 	onopen,
+		// 	onmessage,
+		// 	onclose
+		// })
 
 		// navigator.mediaDevices
 		// 	.getUserMedia({
@@ -104,8 +104,28 @@ function App () {
 	}
 
 	const connectUser = () => {
-		addUserConnected(user.current)
-		sendSocketMessage({ type: 'userConnected', user: user.current })
+		const onopen = (event) => {
+			console.log('socket conectado', event)
+			addUserConnected(user.current)
+			sendSocketMessage({ type: 'userConnected', user: user.current })
+		}
+
+		const onmessage = (event) => {
+			console.log(event.data)
+			handlerPeerMessages(event.data)
+		}
+
+		const onclose = (event) => {
+			console.log('socket cerrado', event)
+			closePeerconnection()
+		}
+
+		createConnectionWebSocket({
+			url: 'wss://meet.estoesunaprueba.fun:8050/ws/webrtc/',
+			onopen,
+			onmessage,
+			onclose
+		})
 	}
 
 	function addUserConnected(user) {
@@ -121,7 +141,6 @@ function App () {
 			<p>Hola</p>
 
 			<button onClick={connectUser}
-				disabled={!isSocketConnected}
 				className='btnSendMessage'>sala de conexion</button>
 
 			{/* <button onClick={startVideo} disabled={!isSocketConnected}>
