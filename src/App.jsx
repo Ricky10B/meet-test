@@ -12,11 +12,11 @@ function App () {
 	const localStream = useRef()
 	const videoLocal = useRef()
 	const videoRemote = useRef()
-	const idUser = useRef(crypto.randomUUID())
+	const user = useRef({ id: crypto.randomUUID() })
 
 	const { createConnectionWebSocket, sendSocketMessage } = useWebsocket()
 	const { handlerPeerMessages, createOffer, closePeerconnection } = useWebRTC({
-		idUser: idUser.current,
+		user: user.current,
 		sendSocketMessage,
 		handlerSendTrack,
 		handlerListenTrack,
@@ -24,6 +24,9 @@ function App () {
 	})
 
 	useEffect(() => {
+		// clear prev users saved
+		window.localStorage.setItem('usersConnected', '')
+
 		const onopen = (event) => {
 			console.log('socket conectado', event)
 			setIsSocketConnected(true)
@@ -101,12 +104,16 @@ function App () {
 	}
 
 	const connectUser = () => {
-		addUserConnected(idUser.current)
-		sendSocketMessage({ type: 'userConnected', idUser: idUser.current })
+		addUserConnected(user.current)
+		sendSocketMessage({ type: 'userConnected', user: user.current })
 	}
 
 	function addUserConnected(user) {
-		setUsersConnected(prev => prev.concat(user))
+		setUsersConnected(prevUsers => {
+			const isUserExist = prevUsers.find(prevUser => prevUser.id === user.id)
+			if (!isUserExist) return prevUsers.concat(user)
+			return prevUsers
+		})
 	}
 
 	return (

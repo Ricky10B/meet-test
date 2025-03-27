@@ -1,6 +1,6 @@
 import { useRef } from "react";
 
-export function useWebRTC ({ idUser, sendSocketMessage, handlerSendTrack, handlerListenTrack, addUserConnected }) {
+export function useWebRTC ({ user, sendSocketMessage, handlerSendTrack, handlerListenTrack, addUserConnected }) {
   const peerConnection = useRef()
 
   const handlerPeerMessages = (dataPeer) => {
@@ -19,7 +19,7 @@ export function useWebRTC ({ idUser, sendSocketMessage, handlerSendTrack, handle
 				handlerUserConnected(dataParsed)
 				break
 			case 'responseUserConnected':
-				addUserConnected(dataParsed.idUser)
+				addUserConnected(dataParsed.user)
 				break
 			default:
 				console.log('opción inválida')
@@ -99,8 +99,8 @@ export function useWebRTC ({ idUser, sendSocketMessage, handlerSendTrack, handle
   }
 
   const handlerUserConnected = (data) => {
-    addUserConnected(data.idUser)
-    sendSocketMessage({ type: 'responseUserConnected', idUser })
+    addUserConnected(data.user)
+    sendSocketMessage({ type: 'responseUserConnected', user })
   }
 
   const closePeerconnection = () => {
