@@ -105,7 +105,7 @@ export function useWebRTC ({ user, sendSocketMessage, handlerSendTrack, handlerL
     sendSocketMessage({ type: 'responseUserConnected', user })
   }
 
-  const closePeerconnection = () => {
+  const closePeerConnection = () => {
     peerConnection.current.close()
   }
 
@@ -113,6 +113,6 @@ export function useWebRTC ({ user, sendSocketMessage, handlerSendTrack, handlerL
     handlerPeerMessages,
     createOffer,
     handlerAddTrack,
-    closePeerconnection
+    closePeerConnection
   }
 }

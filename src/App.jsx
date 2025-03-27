@@ -2,55 +2,36 @@ import './App.css'
 import { useEffect, useState, useRef } from 'react'
 import { useWebsocket } from './hooks/useWebSocket'
 import { useWebRTC } from './hooks/useWebRTC'
+import { forwardRef } from 'react'
+import { useImperativeHandle } from 'react'
 
 function App () {
 	const [usersConnected, setUsersConnected] = useState([])
+	const [isCloseAllPeerConnections, setIsCloseAllPeerConnections] = useState(false)
 	// const [isSocketConnected, setIsSocketConnected] = useState(false)
 	// const [mute, setMute] = useState(false)
 	// const [video, setVideo] = useState(false)
 
-	// const localStream = useRef()
+	const localStream = useRef()
+	const hijo = useRef()
 	// const videoLocal = useRef()
 	// const videoRemote = useRef()
 	const user = useRef({ id: crypto.randomUUID() })
-	
+
+	const { createConnectionWebSocket, sendSocketMessage } = useWebsocket()
+	// const { handlerPeerMessages, createOffer, closePeerconnection } = useWebRTC({
+	// 	user,
+	// 	sendSocketMessage,
+	// 	handlerSendTrack,
+	// 	handlerListenTrack,
+	// 	addUserConnected
+	// })
 
 	useEffect(() => {
 		// clear prev users saved
 		window.localStorage.setItem('usersConnected', '')
 
-		// const onopen = (event) => {
-		// 	console.log('socket conectado', event)
-		// 	setIsSocketConnected(true)
-		// }
-
-		// const onmessage = (event) => {
-		// 	console.log(event.data)
-		// 	handlerPeerMessages(event.data)
-		// }
-
-		// const onclose = (event) => {
-		// 	console.log('socket cerrado', event)
-		// 	setIsSocketConnected(false)
-		// 	closePeerconnection()
-		// }
-
-		// createConnectionWebSocket({
-		// 	url: 'wss://meet.estoesunaprueba.fun:8050/ws/webrtc/',
-		// 	onopen,
-		// 	onmessage,
-		// 	onclose
-		// })
-
-		// navigator.mediaDevices
-		// 	.getUserMedia({
-		// 		audio: true,
-		// 		video: true,
-		// 	})
-		// 	.then((stream) => {
-		// 		localStream.current = stream
-		// 		videoLocal.current.srcObject = stream
-		// 	})
+		// connectUser()
 	}, [])
 
 	useEffect(() => {
@@ -58,32 +39,32 @@ function App () {
 		window.localStorage.setItem('usersConnected', JSON.stringify(usersConnected))
 	}, [usersConnected])
 
-	const sendMessage = () => {
-		console.log('enviando mensaje...')
-		sendSocketMessage({ message: 'Hola Perra sarnosa' })
-	}
+	// const sendMessage = () => {
+	// 	console.log('enviando mensaje...')
+	// 	sendSocketMessage({ message: 'Hola Perra sarnosa' })
+	// }
 
-	const startVideo = async () => {
-		createOffer()
-	}
+	// const startVideo = async () => {
+	// 	createOffer()
+	// }
 
-	const closeCall = () => {
-		closePeerconnection()
-	}
+	// const closeCall = () => {
+	// 	closePeerconnection()
+	// }
 
-	const muteCall = () => {
-		setMute((prev) => !prev)
+	// const muteCall = () => {
+	// 	setMute((prev) => !prev)
 
-		const tracks = localStream.current.getAudioTracks()
-		tracks.forEach((track) => (track.enabled = mute))
-	}
+	// 	const tracks = localStream.current.getAudioTracks()
+	// 	tracks.forEach((track) => (track.enabled = mute))
+	// }
 
-	const showCall = () => {
-		setVideo((prev) => !prev)
+	// const showCall = () => {
+	// 	setVideo((prev) => !prev)
 
-		const tracks = localStream.current.getVideoTracks()
-		tracks.forEach((track) => (track.enabled = video))
-	}
+	// 	const tracks = localStream.current.getVideoTracks()
+	// 	tracks.forEach((track) => (track.enabled = video))
+	// }
 
 	// function handlerSendTrack () {
 	// 	const tracks = localStream.current.getTracks()
@@ -96,29 +77,42 @@ function App () {
 	// }
 
 	const connectUser = () => {
-		addUserConnected(user.current)
-		// const onopen = (event) => {
-		// 	console.log('socket conectado', event)
-		// 	addUserConnected(user.current)
-		// 	sendSocketMessage({ type: 'userConnected', user: user.current })
-		// }
+		const onopen = (event) => {
+			console.log('socket conectado', event)
+			// addUserConnected(user.current)
+			sendSocketMessage({ type: 'userConnected', user: user.current })
+			setIsCloseAllPeerConnections(false)
+		}
 
-		// const onmessage = (event) => {
-		// 	console.log(event.data)
-		// 	handlerPeerMessages(event.data)
-		// }
+		const onmessage = (event) => {
+			console.log(event.data)
+			if (typeof hijo.current.handlerPeerMessages === 'function') {
+				handlerPeerMessages(event.data)
+			}
+		}
 
-		// const onclose = (event) => {
-		// 	console.log('socket cerrado', event)
-		// 	closePeerconnection()
-		// }
+		const onclose = (event) => {
+			console.log('socket cerrado', event)
+			// closePeerconnection()
+			setIsCloseAllPeerConnections(true)
+		}
 
-		// createConnectionWebSocket({
-		// 	url: 'wss://meet.estoesunaprueba.fun:8050/ws/webrtc/',
-		// 	onopen,
-		// 	onmessage,
-		// 	onclose
-		// })
+		createConnectionWebSocket({
+			url: 'wss://meet.estoesunaprueba.fun:8050/ws/webrtc/',
+			onopen,
+			onmessage,
+			onclose
+		})
+
+		navigator.mediaDevices
+			.getUserMedia({
+				audio: true,
+				video: true,
+			})
+			.then((stream) => {
+				localStream.current = stream
+				videoLocal.current.srcObject = stream
+			})
 	}
 
 	function addUserConnected(user) {
@@ -136,11 +130,12 @@ function App () {
 			<button onClick={connectUser}
 				className='btnSendMessage'>sala de conexion</button>
 
-			{usersConnected.length > 0 && (
-				usersConnected.map(user => (
-					<ShowVideoUser user={user} />
-				))
-			)}
+			<div>
+				<video ref={videoLocal} autoPlay muted></video>
+				{usersConnected.map(user => (
+					<ShowVideoUser user={user} localStream={localStream.current} addUserConnected={addUserConnected} sendSocketMessage={sendSocketMessage} isCloseAllPeerConnections={isCloseAllPeerConnections} ref={hijo} />
+				))}
+			</div>
 
 			{/* <button onClick={startVideo} disabled={!isSocketConnected}>
 				iniciar llamada
@@ -172,11 +167,9 @@ function App () {
 
 export default App
 
-function ShowVideoUser ({ user, addUserConnected }) {
-	const videoLocal = useRef()
-
-	const { createConnectionWebSocket, sendSocketMessage } = useWebsocket()
-	const { handlerPeerMessages, createOffer, closePeerconnection } = useWebRTC({
+const ShowVideoUser = forwardRef(function ShowVideoUser ({ user, localStream, addUserConnected, sendSocketMessage, isCloseAllPeerConnections }, ref) {
+	// const { createConnectionWebSocket, sendSocketMessage } = useWebsocket()
+	const { handlerPeerMessages, createOffer, closePeerConnection } = useWebRTC({
 		user,
 		sendSocketMessage,
 		handlerSendTrack,
@@ -185,33 +178,18 @@ function ShowVideoUser ({ user, addUserConnected }) {
 	})
 
 	useEffect(() => {
-		const onopen = (event) => {
-			console.log('socket conectado', event)
-			createOffer()
-			sendSocketMessage({ type: 'userConnected', user })
-		}
-
-		const onmessage = (event) => {
-			console.log(event.data)
-			handlerPeerMessages(event.data)
-		}
-
-		const onclose = (event) => {
-			console.log('socket cerrado', event)
-			closePeerconnection()
-		}
-
-		createConnectionWebSocket({
-			url: 'wss://meet.estoesunaprueba.fun:8050/ws/webrtc/',
-			onopen,
-			onmessage,
-			onclose
-		})
+		createOffer()
 	}, [])
 
+	useEffect(() => {
+		if (isCloseAllPeerConnections) {
+			closePeerConnection()
+		}
+	}, [isCloseAllPeerConnections])
+
 	function handlerSendTrack () {
-		const tracks = localStream.current.getTracks()
-		return { tracks, stream: localStream.current }
+		const tracks = localStream.getTracks()
+		return { tracks, stream: localStream }
 	}
 
 	function handlerListenTrack (event) {
@@ -219,7 +197,13 @@ function ShowVideoUser ({ user, addUserConnected }) {
 		videoRemote.current.srcObject = event.streams[0]
 	}
 
+	useImperativeHandle(ref, () => ({
+		handlerPeerMessages() {
+			handlerPeerMessages()
+		}
+	}))
+
 	return (
 		<video ref={videoLocal} autoPlay muted></video>
 	)
-}
+})
