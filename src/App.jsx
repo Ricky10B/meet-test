@@ -1,9 +1,7 @@
 import './App.css'
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, forwardRef, useImperativeHandle } from 'react'
 import { useWebsocket } from './hooks/useWebSocket'
 import { useWebRTC } from './hooks/useWebRTC'
-import { forwardRef } from 'react'
-import { useImperativeHandle } from 'react'
 
 function App () {
 	const [usersConnected, setUsersConnected] = useState([])
@@ -86,7 +84,8 @@ function App () {
 
 		const onmessage = (event) => {
 			console.log(event.data)
-			if (typeof hijo.current.executeHandlerPeerMessages === 'function') {
+			console.log({ hijo: hijo.current })
+			if (typeof hijo.current?.executeHandlerPeerMessages === 'function') {
 				hijo.current.executeHandlerPeerMessages(event.data)
 			}
 		}
