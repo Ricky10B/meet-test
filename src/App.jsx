@@ -86,8 +86,8 @@ function App () {
 
 		const onmessage = (event) => {
 			console.log(event.data)
-			if (typeof hijo.current.handlerPeerMessages === 'function') {
-				handlerPeerMessages(event.data)
+			if (typeof hijo.current.executeHandlerPeerMessages === 'function') {
+				hijo.current.executeHandlerPeerMessages(event.data)
 			}
 		}
 
@@ -198,7 +198,7 @@ const ShowVideoUser = forwardRef(function ShowVideoUser ({ user, localStream, ad
 	}
 
 	useImperativeHandle(ref, () => ({
-		handlerPeerMessages() {
+		executeHandlerPeerMessages() {
 			handlerPeerMessages()
 		}
 	}))
