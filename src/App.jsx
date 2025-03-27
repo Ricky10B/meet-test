@@ -4,6 +4,7 @@ import { useWebsocket } from './hooks/useWebSocket'
 import { useWebRTC } from './hooks/useWebRTC'
 
 function App () {
+	const [usersConnected, setUsersConnected] = useState([])
 	const [isSocketConnected, setIsSocketConnected] = useState(false)
 	const [mute, setMute] = useState(false)
 	const [video, setVideo] = useState(false)
@@ -11,12 +12,15 @@ function App () {
 	const localStream = useRef()
 	const videoLocal = useRef()
 	const videoRemote = useRef()
+	const idUser = useRef(crypto.randomUUID())
 
 	const { createConnectionWebSocket, sendSocketMessage } = useWebsocket()
 	const { handlerPeerMessages, createOffer, closePeerconnection } = useWebRTC({
+		idUser: idUser.current,
 		sendSocketMessage,
 		handlerSendTrack,
-		handlerListenTrack
+		handlerListenTrack,
+		addUserConnected
 	})
 
 	useEffect(() => {
@@ -43,16 +47,21 @@ function App () {
 			onclose
 		})
 
-		navigator.mediaDevices
-			.getUserMedia({
-				audio: true,
-				video: true,
-			})
-			.then((stream) => {
-				localStream.current = stream
-				videoLocal.current.srcObject = stream
-			})
+		// navigator.mediaDevices
+		// 	.getUserMedia({
+		// 		audio: true,
+		// 		video: true,
+		// 	})
+		// 	.then((stream) => {
+		// 		localStream.current = stream
+		// 		videoLocal.current.srcObject = stream
+		// 	})
 	}, [])
+
+	useEffect(() => {
+		console.log({ usersConnected })
+		window.localStorage.setItem('usersConnected', JSON.stringify(usersConnected))
+	}, [usersConnected])
 
 	const sendMessage = () => {
 		console.log('enviando mensaje...')
@@ -91,11 +100,24 @@ function App () {
 		videoRemote.current.srcObject = event.streams[0]
 	}
 
+	const connectUser = () => {
+		addUserConnected(idUser.current)
+		sendSocketMessage({ type: 'userConnected', idUser: idUser.current })
+	}
+
+	function addUserConnected(user) {
+		setUsersConnected(prev => prev.concat(user))
+	}
+
 	return (
 		<div>
 			<p>Hola</p>
 
-			<button onClick={startVideo} disabled={!isSocketConnected}>
+			<button onClick={connectUser}
+				disabled={!isSocketConnected}
+				className='btnSendMessage'>sala de conexion</button>
+
+			{/* <button onClick={startVideo} disabled={!isSocketConnected}>
 				iniciar llamada
 			</button>
 			<button
@@ -118,7 +140,7 @@ function App () {
 			<div>
 				<video ref={videoLocal} autoPlay muted></video>
 				<video ref={videoRemote} autoPlay></video>
-			</div>
+			</div> */}
 		</div>
 	)
 }
