@@ -13,7 +13,11 @@ function App () {
 	const videoRemote = useRef()
 
 	const { createConnectionWebSocket, sendSocketMessage } = useWebsocket()
-	const { handlerPeerMessages, createOffer, closePeerconnection, handlerAddTrack } = useWebRTC({ sendSocketMessage, handlerListenTrack })
+	const { handlerPeerMessages, createOffer, closePeerconnection } = useWebRTC({
+		sendSocketMessage,
+		handlerSendTrack,
+		handlerListenTrack
+	})
 
 	useEffect(() => {
 		const onopen = (event) => {
@@ -57,9 +61,6 @@ function App () {
 
 	const startVideo = async () => {
 		createOffer()
-		localStream.current.getTracks().forEach(track => {
-			handlerAddTrack(track, localStream.current)
-		})
 	}
 
 	const closeCall = () => {
@@ -78,6 +79,11 @@ function App () {
 
 		const tracks = localStream.current.getVideoTracks()
 		tracks.forEach((track) => (track.enabled = video))
+	}
+
+	function handlerSendTrack () {
+		const tracks = localStream.current.getTracks()
+		return { tracks, stream: localStream.current }
 	}
 
 	function handlerListenTrack (event) {

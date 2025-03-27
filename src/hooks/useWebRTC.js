@@ -1,6 +1,6 @@
 import { useRef } from "react";
 
-export function useWebRTC ({ sendSocketMessage, handlerListenTrack }) {
+export function useWebRTC ({ sendSocketMessage, handlerSendTrack, handlerListenTrack }) {
   const peerConnection = useRef()
 
   const handlerPeerMessages = (dataPeer) => {
@@ -61,6 +61,10 @@ export function useWebRTC ({ sendSocketMessage, handlerListenTrack }) {
 		// localStream.current
 		// 	.getTracks()
 		// 	.forEach((track) => peerConnection.current.addTrack(track, localStream.current))
+    const { tracks, stream } = handlerSendTrack()
+    tracks.forEach(track => {
+      peerConnection.current.addTrack(track, stream)
+    })
 	}
 
   const handlerOffer = async (offer) => {
