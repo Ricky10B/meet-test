@@ -59,7 +59,9 @@ export function useWebRTC ({ user, sendSocketMessage, handlerSendTrack, handlerL
 			const state = peerConnection.current.iceConnectionState
 			console.log('ICE Connection State:', state)
 
-      if (state === 'disconnected') {
+      if (state === 'connected') {
+        console.log('RTC Conectado')
+      } else if (state === 'disconnected') {
         alert('RTC Desconectado')
       }
 		}

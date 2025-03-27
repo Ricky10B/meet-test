@@ -6,22 +6,14 @@ import { useWebRTC } from './hooks/useWebRTC'
 function App () {
 	const [usersConnected, setUsersConnected] = useState([])
 	// const [isSocketConnected, setIsSocketConnected] = useState(false)
-	const [mute, setMute] = useState(false)
-	const [video, setVideo] = useState(false)
+	// const [mute, setMute] = useState(false)
+	// const [video, setVideo] = useState(false)
 
-	const localStream = useRef()
-	const videoLocal = useRef()
-	const videoRemote = useRef()
+	// const localStream = useRef()
+	// const videoLocal = useRef()
+	// const videoRemote = useRef()
 	const user = useRef({ id: crypto.randomUUID() })
-
-	const { createConnectionWebSocket, sendSocketMessage } = useWebsocket()
-	const { handlerPeerMessages, createOffer, closePeerconnection } = useWebRTC({
-		user: user.current,
-		sendSocketMessage,
-		handlerSendTrack,
-		handlerListenTrack,
-		addUserConnected
-	})
+	
 
 	useEffect(() => {
 		// clear prev users saved
@@ -93,39 +85,40 @@ function App () {
 		tracks.forEach((track) => (track.enabled = video))
 	}
 
-	function handlerSendTrack () {
-		const tracks = localStream.current.getTracks()
-		return { tracks, stream: localStream.current }
-	}
+	// function handlerSendTrack () {
+	// 	const tracks = localStream.current.getTracks()
+	// 	return { tracks, stream: localStream.current }
+	// }
 
-	function handlerListenTrack (event) {
-		console.log({ event })
-		videoRemote.current.srcObject = event.streams[0]
-	}
+	// function handlerListenTrack (event) {
+	// 	console.log({ event })
+	// 	videoRemote.current.srcObject = event.streams[0]
+	// }
 
 	const connectUser = () => {
-		const onopen = (event) => {
-			console.log('socket conectado', event)
-			addUserConnected(user.current)
-			sendSocketMessage({ type: 'userConnected', user: user.current })
-		}
+		addUserConnected(user.current)
+		// const onopen = (event) => {
+		// 	console.log('socket conectado', event)
+		// 	addUserConnected(user.current)
+		// 	sendSocketMessage({ type: 'userConnected', user: user.current })
+		// }
 
-		const onmessage = (event) => {
-			console.log(event.data)
-			handlerPeerMessages(event.data)
-		}
+		// const onmessage = (event) => {
+		// 	console.log(event.data)
+		// 	handlerPeerMessages(event.data)
+		// }
 
-		const onclose = (event) => {
-			console.log('socket cerrado', event)
-			closePeerconnection()
-		}
+		// const onclose = (event) => {
+		// 	console.log('socket cerrado', event)
+		// 	closePeerconnection()
+		// }
 
-		createConnectionWebSocket({
-			url: 'wss://meet.estoesunaprueba.fun:8050/ws/webrtc/',
-			onopen,
-			onmessage,
-			onclose
-		})
+		// createConnectionWebSocket({
+		// 	url: 'wss://meet.estoesunaprueba.fun:8050/ws/webrtc/',
+		// 	onopen,
+		// 	onmessage,
+		// 	onclose
+		// })
 	}
 
 	function addUserConnected(user) {
@@ -142,6 +135,12 @@ function App () {
 
 			<button onClick={connectUser}
 				className='btnSendMessage'>sala de conexion</button>
+
+			{usersConnected.length > 0 && (
+				usersConnected.map(user => (
+					<ShowVideoUser user={user} />
+				))
+			)}
 
 			{/* <button onClick={startVideo} disabled={!isSocketConnected}>
 				iniciar llamada
@@ -172,3 +171,55 @@ function App () {
 }
 
 export default App
+
+function ShowVideoUser ({ user, addUserConnected }) {
+	const videoLocal = useRef()
+
+	const { createConnectionWebSocket, sendSocketMessage } = useWebsocket()
+	const { handlerPeerMessages, createOffer, closePeerconnection } = useWebRTC({
+		user,
+		sendSocketMessage,
+		handlerSendTrack,
+		handlerListenTrack,
+		addUserConnected
+	})
+
+	useEffect(() => {
+		const onopen = (event) => {
+			console.log('socket conectado', event)
+			createOffer()
+			sendSocketMessage({ type: 'userConnected', user })
+		}
+
+		const onmessage = (event) => {
+			console.log(event.data)
+			handlerPeerMessages(event.data)
+		}
+
+		const onclose = (event) => {
+			console.log('socket cerrado', event)
+			closePeerconnection()
+		}
+
+		createConnectionWebSocket({
+			url: 'wss://meet.estoesunaprueba.fun:8050/ws/webrtc/',
+			onopen,
+			onmessage,
+			onclose
+		})
+	}, [])
+
+	function handlerSendTrack () {
+		const tracks = localStream.current.getTracks()
+		return { tracks, stream: localStream.current }
+	}
+
+	function handlerListenTrack (event) {
+		console.log({ event })
+		videoRemote.current.srcObject = event.streams[0]
+	}
+
+	return (
+		<video ref={videoLocal} autoPlay muted></video>
+	)
+}
