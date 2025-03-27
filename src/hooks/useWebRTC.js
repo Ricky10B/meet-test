@@ -1,38 +1,31 @@
 import { useRef } from "react";
 
-export function useWebRTC ({ user, sendSocketMessage, handlerSendTrack, handlerListenTrack, addUserConnected }) {
+export function useWebRTC ({ sendSocketMessage, handlerSendTrack, handlerListenTrack }) {
   const peerConnection = useRef()
 
-  const handlerPeerMessages = (dataPeer) => {
-		const dataParsed = JSON.parse(dataPeer)
-		switch (dataParsed.type) {
-			case 'offer':
-				handlerOffer(dataParsed)
-				break
-			case 'answer':
-				handlerAnswer(dataParsed)
-				break
-			case 'candidate':
-				handlerCandidate(dataParsed)
-				break
-			case 'userConnected':
-				handlerUserConnected(dataParsed)
-				break
-			case 'responseUserConnected':
-				addUserConnected(dataParsed.user)
-				break
-			default:
-				console.log('opción inválida')
-				break
-		}
-	}
-
-  const createOffer = async () => {
-    await createPeer()
-		const offer = await peerConnection.current.createOffer()
-		await peerConnection.current.setLocalDescription(offer)
-		sendSocketMessage(offer)
-  }
+  // const handlerPeerMessages = (dataPeer) => {
+	// 	const dataParsed = JSON.parse(dataPeer)
+	// 	switch (dataParsed.type) {
+	// 		case 'offer':
+	// 			handlerOffer(dataParsed)
+	// 			break
+	// 		case 'answer':
+	// 			handlerAnswer(dataParsed)
+	// 			break
+	// 		case 'candidate':
+	// 			handlerCandidate(dataParsed)
+	// 			break
+	// 		case 'userConnected':
+	// 			handlerUserConnected(dataParsed)
+	// 			break
+	// 		case 'responseUserConnected':
+	// 			addUserConnected(dataParsed.user)
+	// 			break
+	// 		default:
+	// 			console.log('opción inválida')
+	// 			break
+	// 	}
+	// }
 
   const createPeer = async () => {
 		const configuracion = {
@@ -75,6 +68,13 @@ export function useWebRTC ({ user, sendSocketMessage, handlerSendTrack, handlerL
     })
 	}
 
+  const createOffer = async () => {
+    await createPeer()
+		const offer = await peerConnection.current.createOffer()
+		await peerConnection.current.setLocalDescription(offer)
+		sendSocketMessage(offer)
+  }
+
   const handlerOffer = async (offer) => {
 		await createPeer()
 		await peerConnection.current.setRemoteDescription(new RTCSessionDescription(offer))
@@ -100,18 +100,20 @@ export function useWebRTC ({ user, sendSocketMessage, handlerSendTrack, handlerL
     peerConnection.current.addTrack(track, stream)
   }
 
-  const handlerUserConnected = (data) => {
-    addUserConnected(data.user)
-    sendSocketMessage({ type: 'responseUserConnected', user })
-  }
+  // const handlerUserConnected = (data) => {
+  //   addUserConnected(data.user)
+  //   sendSocketMessage({ type: 'responseUserConnected', user })
+  // }
 
   const closePeerConnection = () => {
     peerConnection.current.close()
   }
 
   return {
-    handlerPeerMessages,
     createOffer,
+    handlerOffer,
+    handlerAnswer,
+    handlerCandidate,
     handlerAddTrack,
     closePeerConnection
   }

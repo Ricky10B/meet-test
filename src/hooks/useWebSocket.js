@@ -21,8 +21,15 @@ export function useWebsocket () {
     }
   }
 
+  const updateOnMessages = (onmessage) => {
+    console.log({ onmessage })
+    webSocket.current.onmessage = onmessage
+    console.log({ onm: webSocket.current.onmessage })
+  }
+
   return {
     createConnectionWebSocket,
-    sendSocketMessage
+    sendSocketMessage,
+    updateOnMessages
   }
 }
