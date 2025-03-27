@@ -14,7 +14,7 @@ function App () {
 
 	const localStream = useRef()
 	const hijo = useRef()
-	// const videoLocal = useRef()
+	const videoLocal = useRef()
 	// const videoRemote = useRef()
 	const user = useRef({ id: crypto.randomUUID() })
 
