@@ -1,197 +1,215 @@
-import './App.css'
-import { useEffect, useState, useRef, forwardRef, useImperativeHandle } from 'react'
-import { useWebsocket } from './hooks/useWebSocket'
-import { useWebRTC } from './hooks/useWebRTC'
+import "./App.css"
+import { useEffect, useState, useRef } from "react"
+import { useWebsocket } from "./hooks/useWebSocket"
+import { useWebRTC } from "./hooks/useWebRTC"
 
-function App () {
-	const [usersConnected, setUsersConnected] = useState([])
-	const [isCloseAllPeerConnections, setIsCloseAllPeerConnections] = useState(false)
-	const objectFunctionsWebSocket = useRef({})
-	// const [objectFunctionsWebSocket, setObjectFunctionsWebSocket] = useState({
-	// 	'userConnected': handlerUserConnected,
-	// 	'responseUserConnected': handlerAddUserConnected,
-	// })
-	// const [isSocketConnected, setIsSocketConnected] = useState(false)
-	// const [mute, setMute] = useState(false)
-	// const [video, setVideo] = useState(false)
+function App() {
+  const [usersConnected, setUsersConnected] = useState([])
+  const [isCloseAllPeerConnections, setIsCloseAllPeerConnections] =
+    useState(false)
+  const objectFunctionsWebSocket = useRef({})
+  // const [objectFunctionsWebSocket, setObjectFunctionsWebSocket] = useState({
+  // 	'userConnected': handlerUserConnected,
+  // 	'responseUserConnected': handlerAddUserConnected,
+  // })
+  // const [isSocketConnected, setIsSocketConnected] = useState(false)
+  // const [mute, setMute] = useState(false)
+  // const [video, setVideo] = useState(false)
 
-	const localStream = useRef()
-	const videoLocal = useRef()
-	// const videoRemote = useRef()
-	const user = useRef({ id: crypto.randomUUID() })
+  const localStream = useRef()
+  const videoLocal = useRef()
+  // const videoRemote = useRef()
+  const user = useRef({ id: crypto.randomUUID() })
+  const isSendOffer = useRef(true)
 
-	const { createConnectionWebSocket, sendSocketMessage, updateOnMessages } = useWebsocket()
-	// const { handlerPeerMessages, createOffer, closePeerconnection } = useWebRTC({
-	// 	user,
-	// 	sendSocketMessage,
-	// 	handlerSendTrack,
-	// 	handlerListenTrack,
-	// 	addUserConnected
-	// })
+  const { createConnectionWebSocket, sendSocketMessage, updateOnMessages } =
+    useWebsocket()
+  // const { handlerPeerMessages, createOffer, closePeerconnection } = useWebRTC({
+  // 	user,
+  // 	sendSocketMessage,
+  // 	handlerSendTrack,
+  // 	handlerListenTrack,
+  // 	addUserConnected
+  // })
 
-	useEffect(() => {
-		// clear prev users saved
-		window.localStorage.setItem('usersConnected', '')
+  useEffect(() => {
+    // clear prev users saved
+    window.localStorage.setItem("usersConnected", "")
 
-		// connectUser()
+    // connectUser()
 
-		objectFunctionsWebSocket.current = {
-			'userConnected': handlerUserConnected,
-			'responseUserConnected': handlerAddUserConnected,
-		}
-	}, [])
+    objectFunctionsWebSocket.current = {
+      userConnected: handlerUserConnected,
+      responseUserConnected: handlerAddUserConnected,
+    }
+  }, [])
 
-	useEffect(() => {
-		console.log({ usersConnected })
-		window.localStorage.setItem('usersConnected', JSON.stringify(usersConnected))
-	}, [usersConnected])
+  useEffect(() => {
+    console.log({ usersConnected })
+    window.localStorage.setItem(
+      "usersConnected",
+      JSON.stringify(usersConnected)
+    )
+  }, [usersConnected])
 
-	// const sendMessage = () => {
-	// 	console.log('enviando mensaje...')
-	// 	sendSocketMessage({ message: 'Hola Perra sarnosa' })
-	// }
+  // const sendMessage = () => {
+  // 	console.log('enviando mensaje...')
+  // 	sendSocketMessage({ message: 'Hola Perra sarnosa' })
+  // }
 
-	// const startVideo = async () => {
-	// 	createOffer()
-	// }
+  // const startVideo = async () => {
+  // 	createOffer()
+  // }
 
-	// const closeCall = () => {
-	// 	closePeerconnection()
-	// }
+  // const closeCall = () => {
+  // 	closePeerconnection()
+  // }
 
-	// const muteCall = () => {
-	// 	setMute((prev) => !prev)
+  // const muteCall = () => {
+  // 	setMute((prev) => !prev)
 
-	// 	const tracks = localStream.current.getAudioTracks()
-	// 	tracks.forEach((track) => (track.enabled = mute))
-	// }
+  // 	const tracks = localStream.current.getAudioTracks()
+  // 	tracks.forEach((track) => (track.enabled = mute))
+  // }
 
-	// const showCall = () => {
-	// 	setVideo((prev) => !prev)
+  // const showCall = () => {
+  // 	setVideo((prev) => !prev)
 
-	// 	const tracks = localStream.current.getVideoTracks()
-	// 	tracks.forEach((track) => (track.enabled = video))
-	// }
+  // 	const tracks = localStream.current.getVideoTracks()
+  // 	tracks.forEach((track) => (track.enabled = video))
+  // }
 
-	// function handlerSendTrack () {
-	// 	const tracks = localStream.current.getTracks()
-	// 	return { tracks, stream: localStream.current }
-	// }
+  // function handlerSendTrack () {
+  // 	const tracks = localStream.current.getTracks()
+  // 	return { tracks, stream: localStream.current }
+  // }
 
-	// function handlerListenTrack (event) {
-	// 	console.log({ event })
-	// 	videoRemote.current.srcObject = event.streams[0]
-	// }
+  // function handlerListenTrack (event) {
+  // 	console.log({ event })
+  // 	videoRemote.current.srcObject = event.streams[0]
+  // }
 
-	const handlerUserConnected = (data) => {
+  const handlerUserConnected = (data) => {
     addUserConnected(data.user)
-    sendSocketMessage({ type: 'responseUserConnected', user: user.current })
+    sendSocketMessage({ type: "responseUserConnected", user: user.current })
   }
 
-	const handlerPeerMessages = (dataPeer) => {
-		const dataParsed = JSON.parse(dataPeer)
+  const handlerPeerMessages = (event) => {
+    console.log(event.data)
+    const dataParsed = JSON.parse(event.data)
 
-		const functionWebsocket = objectFunctionsWebSocket.current[dataParsed.type]
-		if (typeof functionWebsocket === 'function') functionWebsocket(dataParsed)
-		else console.log('opción inválida')
-		// switch (dataParsed.type) {
-			// case 'offer':
-			// 	handlerOffer(dataParsed)
-			// 	break
-			// case 'answer':
-			// 	handlerAnswer(dataParsed)
-			// 	break
-			// case 'candidate':
-			// 	handlerCandidate(dataParsed)
-			// 	break
-			// case 'userConnected':
-			// 	handlerUserConnected(dataParsed)
-			// 	break
-			// case 'responseUserConnected':
-			// 	addUserConnected(dataParsed)
-			// 	break
-			// default:
-			// 	console.log('opción inválida')
-			// 	break
-		// }
-	}
+    const functionWebsocket = objectFunctionsWebSocket.current[dataParsed.type]
+    if (typeof functionWebsocket === "function") functionWebsocket(dataParsed)
+    else console.log("opción inválida")
 
-	const connectUser = () => {
-		const onopen = (event) => {
-			console.log('socket conectado', event)
-			// addUserConnected(user.current)
-			sendSocketMessage({ type: 'userConnected', user: user.current })
-			setIsCloseAllPeerConnections(false)
-		}
+    if (dataParsed.type === "answer") isSendOffer.current = false
+    // switch (dataParsed.type) {
+    // case 'offer':
+    // 	handlerOffer(dataParsed)
+    // 	break
+    // case 'answer':
+    // 	handlerAnswer(dataParsed)
+    // 	break
+    // case 'candidate':
+    // 	handlerCandidate(dataParsed)
+    // 	break
+    // case 'userConnected':
+    // 	handlerUserConnected(dataParsed)
+    // 	break
+    // case 'responseUserConnected':
+    // 	addUserConnected(dataParsed)
+    // 	break
+    // default:
+    // 	console.log('opción inválida')
+    // 	break
+    // }
+  }
 
-		const onmessage = (event) => {
-			console.log(event.data)
-			handlerPeerMessages(event.data)
-			// if (typeof window.handlerPeerMessages === 'function') {
-			// 	hijo.current.executeHandlerPeerMessages(event.data)
-			// }
-		}
+  const connectUser = () => {
+    const onopen = (event) => {
+      console.log("socket conectado", event)
+      // addUserConnected(user.current)
+      sendSocketMessage({ type: "userConnected", user: user.current })
+      setIsCloseAllPeerConnections(false)
+    }
 
-		const onclose = (event) => {
-			console.log('socket cerrado', event)
-			// closePeerconnection()
-			setIsCloseAllPeerConnections(true)
-		}
+    const onmessage = handlerPeerMessages
+    // console.log(event.data)
+    // (event.data)
+    // if (typeof window.handlerPeerMessages === 'function') {
+    // 	hijo.current.executeHandlerPeerMessages(event.data)
+    // }
+    // }
 
-		createConnectionWebSocket({
-			url: 'wss://meet.estoesunaprueba.fun:8050/ws/webrtc/',
-			onopen,
-			onmessage,
-			onclose
-		})
+    const onclose = (event) => {
+      console.log("socket cerrado", event)
+      // closePeerconnection()
+      setIsCloseAllPeerConnections(true)
+    }
 
-		navigator.mediaDevices
-			.getUserMedia({
-				audio: true,
-				video: true,
-			})
-			.then((stream) => {
-				localStream.current = stream
-				videoLocal.current.srcObject = stream
-			})
-	}
+    createConnectionWebSocket({
+      url: "wss://meet.estoesunaprueba.fun:8050/ws/webrtc/",
+      onopen,
+      onmessage,
+      onclose,
+    })
 
-	const handlerAddUserConnected = (data) => {
-		addUserConnected(data.user)
-	}
+    navigator.mediaDevices
+      .getUserMedia({
+        audio: true,
+        video: true,
+      })
+      .then((stream) => {
+        localStream.current = stream
+        videoLocal.current.srcObject = stream
+      })
+  }
 
-	function addUserConnected(user) {
-		setUsersConnected(prevUsers => {
-			const isUserExist = prevUsers.find(prevUser => prevUser.id === user.id)
-			if (!isUserExist) return prevUsers.concat(user)
-			return prevUsers
-		})
-	}
+  const handlerAddUserConnected = (data) => {
+    isSendOffer.current = false
+    addUserConnected(data.user)
+  }
 
-	const updateOnMesageWebSocket = (newFunctions) => {
-		objectFunctionsWebSocket.current = {
-			...objectFunctionsWebSocket.current,
-			...newFunctions
-		}
+  function addUserConnected(user) {
+    setUsersConnected((prevUsers) => {
+      const isUserExist = prevUsers.find((prevUser) => prevUser.id === user.id)
+      if (!isUserExist) return prevUsers.concat(user)
+      return prevUsers
+    })
+  }
 
-		updateOnMessages(objectFunctionsWebSocket.current)
-	}
+  const updateOnMesageWebSocket = (newFunctions) => {
+    objectFunctionsWebSocket.current = {
+      ...objectFunctionsWebSocket.current,
+      ...newFunctions,
+    }
 
-	return (
-		<div>
-			<p>Hola</p>
+    updateOnMessages(handlerPeerMessages)
+  }
 
-			<button onClick={connectUser}
-				className='btnSendMessage'>sala de conexion</button>
+  return (
+    <div>
+      <p>Hola</p>
 
-			<div>
-				<video ref={videoLocal} autoPlay muted></video>
-				{usersConnected.map((user) => (
-					<ShowVideoUser key={user} localStream={localStream.current} sendSocketMessage={sendSocketMessage} isCloseAllPeerConnections={isCloseAllPeerConnections} updateOnMesageWebSocket={updateOnMesageWebSocket} />
-				))}
-			</div>
+      <button onClick={connectUser} className="btnSendMessage">
+        sala de conexion
+      </button>
 
-			{/* <button onClick={startVideo} disabled={!isSocketConnected}>
+      <div>
+        <video ref={videoLocal} autoPlay muted></video>
+        {usersConnected.map((user, i) => (
+          <ShowVideoUser
+            key={i}
+            isSendOffer={isSendOffer.current}
+            localStream={localStream.current}
+            sendSocketMessage={sendSocketMessage}
+            isCloseAllPeerConnections={isCloseAllPeerConnections}
+            updateOnMesageWebSocket={updateOnMesageWebSocket}
+          />
+        ))}
+      </div>
+
+      {/* <button onClick={startVideo} disabled={!isSocketConnected}>
 				iniciar llamada
 			</button>
 			<button
@@ -215,52 +233,60 @@ function App () {
 				<video ref={videoLocal} autoPlay muted></video>
 				<video ref={videoRemote} autoPlay></video>
 			</div> */}
-		</div>
-	)
+    </div>
+  )
 }
 
 export default App
 
-function ShowVideoUser ({ localStream, sendSocketMessage, isCloseAllPeerConnections, updateOnMesageWebSocket }) {
-	const videoRemote = useRef()
+function ShowVideoUser({
+  localStream,
+  isSendOffer,
+  sendSocketMessage,
+  isCloseAllPeerConnections,
+  updateOnMesageWebSocket,
+}) {
+  const videoRemote = useRef()
 
-	const { handlerOffer, handlerAnswer, handlerCandidate, createOffer, closePeerConnection } = useWebRTC({
-		sendSocketMessage,
-		handlerSendTrack,
-		handlerListenTrack,
-	})
+  const {
+    handlerOffer,
+    handlerAnswer,
+    handlerCandidate,
+    createOffer,
+    closePeerConnection,
+  } = useWebRTC({
+    sendSocketMessage,
+    handlerSendTrack,
+    handlerListenTrack,
+  })
 
-	useEffect(() => {
-		updateOnMesageWebSocket({
-			'offer': handlerOffer,
-			'answer': handlerAnswer,
-			'candidate': handlerCandidate
-		})
-	}, [])
-	
+  useEffect(() => {
+    console.log("enviando oferta", isSendOffer)
+    if (isSendOffer) createOffer()
 
-	useEffect(() => {
-		createOffer()
-	}, [])
+    updateOnMesageWebSocket({
+      offer: handlerOffer,
+      answer: handlerAnswer,
+      candidate: handlerCandidate,
+    })
+  }, [])
 
-	useEffect(() => {
-		if (isCloseAllPeerConnections) {
-			closePeerConnection()
-		}
-	}, [isCloseAllPeerConnections])
+  useEffect(() => {
+    if (isCloseAllPeerConnections) {
+      closePeerConnection()
+    }
+  }, [isCloseAllPeerConnections])
 
-	function handlerSendTrack () {
-		const tracks = localStream.getTracks()
-		return { tracks, stream: localStream }
-	}
+  function handlerSendTrack() {
+    const tracks = localStream.getTracks()
+    return { tracks, stream: localStream }
+  }
 
-	function handlerListenTrack (event) {
-		console.log({ event })
-		// guardar los streams en variables y mostrar un video por cada stream
-		videoRemote.current.srcObject = event.streams[0]
-	}
+  function handlerListenTrack(event) {
+    console.log({ event })
+    // guardar los streams en variables y mostrar un video por cada stream
+    videoRemote.current.srcObject = event.streams[0]
+  }
 
-	return (
-		<video ref={videoRemote} autoPlay muted></video>
-	)
+  return <video ref={videoRemote} autoPlay muted></video>
 }
