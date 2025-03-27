@@ -102,7 +102,7 @@ function App() {
     if (typeof functionWebsocket === "function") functionWebsocket(dataParsed)
     else console.log("opción inválida")
 
-    if (dataParsed.type === "answer") isSendOffer.current = false
+    if (dataParsed.type === "answer") isSendOffer.current = true
     // switch (dataParsed.type) {
     // case 'offer':
     // 	handlerOffer(dataParsed)
