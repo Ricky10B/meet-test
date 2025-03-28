@@ -18,7 +18,6 @@ function App() {
 
   const localStream = useRef()
   const videoLocal = useRef()
-  // const videoRemote = useRef()
   const user = useRef({ id: crypto.randomUUID() })
   const isSendOffer = useRef(true)
 
@@ -50,6 +49,8 @@ function App() {
       "usersConnected",
       JSON.stringify(usersConnected)
     )
+
+    if (usersConnected.length) isSendOffer.current = false
   }, [usersConnected])
 
   // const sendMessage = () => {
@@ -90,19 +91,25 @@ function App() {
   // }
 
   const handlerUserConnected = (data) => {
-    addUserConnected(data.user)
-    sendSocketMessage({ type: "responseUserConnected", user: user.current })
+    // addUserConnected(data.user)
+    // sendSocketMessage({ type: "responseUserConnected", user: user.current })
   }
 
   const handlerPeerMessages = (event) => {
     console.log(event.data)
     const dataParsed = JSON.parse(event.data)
+    console.log({ dataParsed })
+
+    if (dataParsed.count) {
+      handlerReceiveTotalUsers(dataParsed)
+      return
+    }
 
     const functionWebsocket = objectFunctionsWebSocket.current[dataParsed.type]
     if (typeof functionWebsocket === "function") functionWebsocket(dataParsed)
     else console.log("opción inválida")
 
-    if (dataParsed.type === "answer") isSendOffer.current = true
+    // if (dataParsed.type === "answer") isSendOffer.current = true
     // switch (dataParsed.type) {
     // case 'offer':
     // 	handlerOffer(dataParsed)
@@ -129,17 +136,12 @@ function App() {
     const onopen = (event) => {
       console.log("socket conectado", event)
       // addUserConnected(user.current)
-      sendSocketMessage({ type: "userConnected", user: user.current })
+      sendSocketMessage({ count: true })
+      // sendSocketMessage({ type: "userConnected", user: user.current })
       setIsCloseAllPeerConnections(false)
     }
 
     const onmessage = handlerPeerMessages
-    // console.log(event.data)
-    // (event.data)
-    // if (typeof window.handlerPeerMessages === 'function') {
-    // 	hijo.current.executeHandlerPeerMessages(event.data)
-    // }
-    // }
 
     const onclose = (event) => {
       console.log("socket cerrado", event)
@@ -166,6 +168,7 @@ function App() {
   }
 
   const handlerAddUserConnected = (data) => {
+    console.log('agregar usuario')
     isSendOffer.current = false
     addUserConnected(data.user)
   }
@@ -185,6 +188,17 @@ function App() {
     }
 
     updateOnMessages(handlerPeerMessages)
+  }
+
+  const handlerReceiveTotalUsers = (data) => {
+    if (data.count <= 1) isSendOffer.current = false
+    console.log('Total users:', data.count)
+
+    const listUsers = []
+    for (let i = 1; i < data.count; i++) {
+      listUsers.push(i)
+    }
+    setUsersConnected(listUsers)
   }
 
   return (
