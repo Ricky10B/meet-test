@@ -6,8 +6,10 @@ export function useWebRTC({
   sendSocketMessage,
   handlerSendTrack,
   handlerListenTrack,
+  addNextUser
 }) {
-  const peerConnection = useRef()
+  const peerConnection = useRef(new RTCPeerConnection())
+  const idPeerConnection = useRef(crypto.randomUUID())
 
   // const handlerPeerMessages = (dataPeer) => {
   // 	const dataParsed = JSON.parse(dataPeer)
@@ -42,7 +44,8 @@ export function useWebRTC({
       ],
     }
 
-    peerConnection.current = new RTCPeerConnection(configuracion)
+    // peerConnection.current = new RTCPeerConnection(configuracion)
+    peerConnection.current.setConfiguration(configuracion)
 
     // peerConnection.current.ontrack = (event) => {
     // 	console.log({ event })
@@ -52,7 +55,7 @@ export function useWebRTC({
 
     peerConnection.current.onicecandidate = (event) => {
       if (event.candidate) {
-        sendSocketMessage({ type: "candidate", candidate: event.candidate, channel_name: idUser, idSenderUser })
+        sendSocketMessage({ type: "candidate", candidate: event.candidate, channel_name: idUser, idSenderUser, idPeerConnection: idPeerConnection.current })
       }
     }
 
@@ -62,6 +65,7 @@ export function useWebRTC({
 
       if (state === "connected") {
         console.log("RTC Conectado")
+        addNextUser()
       } else if (state === "disconnected") {
         alert("RTC Desconectado")
       }
@@ -88,14 +92,16 @@ export function useWebRTC({
       type: offer.type,
       sdp: offer.sdp,
       channel_name: idUser,
-      idSenderUser
+      idSenderUser,
+      idPeerConnection: idPeerConnection.current
     })
 
     sendSocketMessage({
       type: offer.type,
       sdp: offer.sdp,
       channel_name: idUser,
-      idSenderUser
+      idSenderUser,
+      idPeerConnection: idPeerConnection.current
     })
   }
 
@@ -116,32 +122,36 @@ export function useWebRTC({
     sendSocketMessage({
       type: 'answer',
       sdp: answer.sdp,
-      channel_name: offer.idSenderUser
+      channel_name: offer.idSenderUser,
+      idSenderUser: offer.channel_name,
+      idPeerConnection: offer.idPeerConnection,
     })
   }
 
   const handlerAnswer = async (answer) => {
-    if (peerConnection.current.signalingState !== "stable") {
-      const objAnswer = {
-        type: answer.type,
-        sdp: answer.sdp
-      }
+    if (answer.idPeerConnection !== idPeerConnection.current) return
+    if (peerConnection.current.signalingState === "stable") return
 
-      await peerConnection.current.setRemoteDescription(
-        new RTCSessionDescription(objAnswer)
-      )
+    const objAnswer = {
+      type: answer.type,
+      sdp: answer.sdp
     }
+
+    await peerConnection.current.setRemoteDescription(
+      new RTCSessionDescription(objAnswer)
+    )
   }
 
   const handlerCandidate = async (candidato) => {
-    console.log({ candidato, idUser, idSenderUser })
+    console.log({ candidato, idUser, idSenderUser, idPeerConnection: idPeerConnection.current })
+    // if (candidato.idPeerConnection === idPeerConnection.current) return
     // if (candidato.idSenderUser === idSenderUser && candidato.candidate) {
     // if (candidato.channel_name === idSenderUser && candidato.candidate) {
-    if (peerConnection.current.signalingState !== "stable") {
-      console.log('SETEANDO ICE CANDIDATE')
-      const iceCandidate = new RTCIceCandidate(candidato.candidate)
-      await peerConnection.current.addIceCandidate(iceCandidate)
-    }
+    if (peerConnection.current.signalingState === "stable") return
+
+    console.log('SETEANDO ICE CANDIDATE')
+    const iceCandidate = new RTCIceCandidate(candidato.candidate)
+    await peerConnection.current.addIceCandidate(iceCandidate)
     // }
   }
 

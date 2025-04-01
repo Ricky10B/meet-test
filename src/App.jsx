@@ -8,6 +8,7 @@ function App() {
   const [isCloseAllPeerConnections, setIsCloseAllPeerConnections] =
     useState(false)
   const objectFunctionsWebSocket = useRef({})
+  const listUsers = useRef([])
   // const [objectFunctionsWebSocket, setObjectFunctionsWebSocket] = useState({
   // 	'userConnected': handlerUserConnected,
   // 	'responseUserConnected': handlerAddUserConnected,
@@ -181,11 +182,16 @@ function App() {
 
   function addUserConnected(user) {
     user = user.user
-    setUsersConnected((prevUsers) => {
-      const isUserExist = prevUsers.find((prevUser) => prevUser.channel_name === user.id)
-      if (!isUserExist) return prevUsers.concat({ channel_name: user.id })
-      return prevUsers
-    })
+    const isUserExist = listUsers.current.find(prevUser => prevUser.channel_name === user.id)
+    if (!isUserExist) {
+      listUsers.current.push({ channel_name: user.id })
+      addNextUser()
+    }
+    // setUsersConnected((prevUsers) => {
+    //   const isUserExist = prevUsers.find((prevUser) => prevUser.channel_name === user.id)
+    //   if (!isUserExist) return prevUsers.concat({ channel_name: user.id })
+    //   return prevUsers
+    // })
   }
 
   const updateOnMesageWebSocket = (newFunctions) => {
@@ -204,12 +210,15 @@ function App() {
     if (users.length <= 1) isSendOffer.current = false
     console.log('Total users:', users)
 
-    const listUsers = []
-    for (let i = 0; i < users.length; i++) {
-      if (users[i].channel_name !== user.current.id) listUsers.push(users[i])
-    }
+    listUsers.current = users
+    addNextUser()
 
-    setUsersConnected(listUsers)
+    // const listUsers = []
+    // for (let i = 0; i < users.length; i++) {
+    //   if (users[i].channel_name !== user.current.id) listUsers.push(users[i])
+    // }
+
+    // setUsersConnected(listUsers)
     // setUsersConnected(prevUsers => {
     //   const listUsers = [...prevUsers]
     //   for (let i = listUsers.length + 1; i < users.length; i++) {
@@ -220,6 +229,11 @@ function App() {
     // })
   }
 
+  const addNextUser = () => {
+    const nextUser = listUsers.current.shift()
+    if (nextUser != null && nextUser.channel_name !== user.current.id) setUsersConnected(prev => prev.concat(nextUser))
+  }
+
   // const handlerReceiveIdChannel = (data) => {
   //   console.log({ data })
   //   user.current = { id: data.id }
@@ -227,7 +241,7 @@ function App() {
 
   return (
     <div>
-      <p>Hola</p>
+      <p>Hola {JSON.stringify(user.current)}</p>
 
       <button onClick={connectUser} className="btnSendMessage">
         sala de conexion
@@ -245,6 +259,7 @@ function App() {
             sendSocketMessage={sendSocketMessage}
             isCloseAllPeerConnections={isCloseAllPeerConnections}
             updateOnMesageWebSocket={updateOnMesageWebSocket}
+            addNextUser={addNextUser}
           />
         ))}
       </div>
@@ -287,6 +302,7 @@ function ShowVideoUser({
   sendSocketMessage,
   isCloseAllPeerConnections,
   updateOnMesageWebSocket,
+  addNextUser
 }) {
   const videoRemote = useRef()
 
@@ -302,6 +318,7 @@ function ShowVideoUser({
     sendSocketMessage,
     handlerSendTrack,
     handlerListenTrack,
+    addNextUser
   })
 
   useEffect(() => {
