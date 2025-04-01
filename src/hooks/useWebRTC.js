@@ -1,6 +1,8 @@
 import { useRef } from "react"
 
 export function useWebRTC({
+  idSenderUser,
+  idUser,
   sendSocketMessage,
   handlerSendTrack,
   handlerListenTrack,
@@ -50,7 +52,7 @@ export function useWebRTC({
 
     peerConnection.current.onicecandidate = (event) => {
       if (event.candidate) {
-        sendSocketMessage({ type: "candidate", candidate: event.candidate })
+        sendSocketMessage({ type: "candidate", candidate: event.candidate, channel_name: idUser, idSenderUser })
       }
     }
 
@@ -70,7 +72,10 @@ export function useWebRTC({
     // 	.forEach((track) => peerConnection.current.addTrack(track, localStream.current))
     const { tracks, stream } = handlerSendTrack()
     tracks.forEach((track) => {
-      peerConnection.current.addTrack(track, stream)
+      // const existingTracks = peerConnection.current.getSenders().map(sender => sender.track)
+      // if (!existingTracks.includes(track)) {
+        peerConnection.current.addTrack(track, stream)
+      // }
     })
   }
 
@@ -78,33 +83,66 @@ export function useWebRTC({
     await createPeer()
     const offer = await peerConnection.current.createOffer()
     await peerConnection.current.setLocalDescription(offer)
-    sendSocketMessage(offer)
+
+    console.log('creando oferta', {
+      type: offer.type,
+      sdp: offer.sdp,
+      channel_name: idUser,
+      idSenderUser
+    })
+
+    sendSocketMessage({
+      type: offer.type,
+      sdp: offer.sdp,
+      channel_name: idUser,
+      idSenderUser
+    })
   }
 
   const handlerOffer = async (offer) => {
+    console.log('Oferta Recivida', offer)
     await createPeer()
+    const objOffer = {
+      type: offer.type,
+      sdp: offer.sdp
+    }
+
     await peerConnection.current.setRemoteDescription(
-      new RTCSessionDescription(offer)
+      new RTCSessionDescription(objOffer)
     )
     const answer = await peerConnection.current.createAnswer()
-    console.log({ offer, answer })
     await peerConnection.current.setLocalDescription(answer)
-    sendSocketMessage(answer)
+    // answer.channel_name = offer.idSenderUser
+    sendSocketMessage({
+      type: 'answer',
+      sdp: answer.sdp,
+      channel_name: offer.idSenderUser
+    })
   }
 
   const handlerAnswer = async (answer) => {
     if (peerConnection.current.signalingState !== "stable") {
+      const objAnswer = {
+        type: answer.type,
+        sdp: answer.sdp
+      }
+
       await peerConnection.current.setRemoteDescription(
-        new RTCSessionDescription(answer)
+        new RTCSessionDescription(objAnswer)
       )
     }
   }
 
   const handlerCandidate = async (candidato) => {
-    if (candidato.candidate) {
+    console.log({ candidato, idUser, idSenderUser })
+    // if (candidato.idSenderUser === idSenderUser && candidato.candidate) {
+    // if (candidato.channel_name === idSenderUser && candidato.candidate) {
+    if (peerConnection.current.signalingState !== "stable") {
+      console.log('SETEANDO ICE CANDIDATE')
       const iceCandidate = new RTCIceCandidate(candidato.candidate)
       await peerConnection.current.addIceCandidate(iceCandidate)
     }
+    // }
   }
 
   const handlerAddTrack = (track, stream) => {
